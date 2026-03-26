@@ -9,6 +9,7 @@ namespace OpenJobEngine.Infrastructure.Services;
 public sealed partial class DefaultNormalizationService : INormalizationService
 {
     private static readonly Regex NumberRegex = SalaryNumberRegex();
+    private static readonly Regex KMultiplierRegex = KMultiplierPattern();
 
     public JobOffer Normalize(RawJobOffer raw)
     {
@@ -18,9 +19,10 @@ public sealed partial class DefaultNormalizationService : INormalizationService
         var location = string.IsNullOrWhiteSpace(raw.LocationText) ? null : TextCanonicalizer.Clean(raw.LocationText);
         var salaryText = string.IsNullOrWhiteSpace(raw.SalaryText) ? null : TextCanonicalizer.Clean(raw.SalaryText);
         var employmentType = ResolveEmploymentType(title, description, raw.Metadata);
-        var seniorityLevel = ResolveSeniority(title, description);
-        var isRemote = ResolveRemote(title, description, location, raw.Metadata);
-        var (salaryMin, salaryMax, salaryCurrency) = ParseSalary(salaryText);
+        var seniorityLevel = ResolveSeniority(title, description, raw.Metadata);
+        var workMode = ResolveWorkMode(title, description, location, raw.Metadata);
+        var (salaryMin, salaryMax, salaryCurrency) = ParseSalary(salaryText, title, description, raw.Metadata);
+        var collectedAtUtc = DateTimeOffset.UtcNow;
 
         return new JobOffer(
             Guid.NewGuid(),
@@ -30,18 +32,25 @@ public sealed partial class DefaultNormalizationService : INormalizationService
             location,
             employmentType,
             seniorityLevel,
+            workMode,
+            null,
+            null,
+            null,
             salaryText,
             salaryMin,
             salaryMax,
             salaryCurrency,
-            isRemote,
+            workMode == WorkMode.Remote,
             raw.Url.Trim(),
             raw.SourceName.Trim(),
             raw.SourceJobId.Trim(),
             raw.PublishedAtUtc,
-            DateTimeOffset.UtcNow,
+            collectedAtUtc,
+            collectedAtUtc,
             string.Empty,
-            true);
+            true,
+            0m,
+            null);
     }
 
     private static EmploymentType ResolveEmploymentType(
@@ -67,12 +76,12 @@ public sealed partial class DefaultNormalizationService : INormalizationService
             return EmploymentType.PartTime;
         }
 
-        if (corpus.Contains("contract") || corpus.Contains("contrato") || corpus.Contains("freelance"))
+        if (corpus.Contains("contract") || corpus.Contains("contrato") || corpus.Contains("freelance") || corpus.Contains("por proyecto"))
         {
             return EmploymentType.Contract;
         }
 
-        if (corpus.Contains("intern") || corpus.Contains("internship") || corpus.Contains("pasant"))
+        if (corpus.Contains("intern") || corpus.Contains("internship") || corpus.Contains("pasant") || corpus.Contains("practicante"))
         {
             return EmploymentType.Internship;
         }
@@ -85,31 +94,36 @@ public sealed partial class DefaultNormalizationService : INormalizationService
         return EmploymentType.Unknown;
     }
 
-    private static SeniorityLevel ResolveSeniority(string title, string? description)
+    private static SeniorityLevel ResolveSeniority(string title, string? description, IReadOnlyDictionary<string, string> metadata)
     {
-        var corpus = $"{title} {description}".ToLowerInvariant();
+        var corpus = string.Join(" ", new[]
+        {
+            title,
+            description,
+            metadata.TryGetValue("category", out var category) ? category : null
+        }.Where(x => !string.IsNullOrWhiteSpace(x))).ToLowerInvariant();
 
-        if (corpus.Contains("lead") || corpus.Contains("principal"))
+        if (corpus.Contains("lead") || corpus.Contains("principal") || corpus.Contains("staff engineer"))
         {
             return SeniorityLevel.Lead;
         }
 
-        if (corpus.Contains("director") || corpus.Contains("head of") || corpus.Contains("vp "))
+        if (corpus.Contains("director") || corpus.Contains("head of") || corpus.Contains("vp ") || corpus.Contains("chief"))
         {
             return SeniorityLevel.Executive;
         }
 
-        if (corpus.Contains("senior") || corpus.Contains("sr "))
+        if (corpus.Contains("senior") || corpus.Contains("sr ") || corpus.Contains("sr.") || corpus.Contains("ssr"))
         {
             return SeniorityLevel.Senior;
         }
 
-        if (corpus.Contains("semi senior") || corpus.Contains("mid") || corpus.Contains("ssr"))
+        if (corpus.Contains("semi senior") || corpus.Contains("semi-senior") || corpus.Contains("mid") || corpus.Contains("middle"))
         {
             return SeniorityLevel.Mid;
         }
 
-        if (corpus.Contains("junior") || corpus.Contains("jr ") || corpus.Contains("trainee"))
+        if (corpus.Contains("junior") || corpus.Contains("jr ") || corpus.Contains("jr.") || corpus.Contains("trainee"))
         {
             return SeniorityLevel.Junior;
         }
@@ -117,7 +131,7 @@ public sealed partial class DefaultNormalizationService : INormalizationService
         return SeniorityLevel.Unknown;
     }
 
-    private static bool ResolveRemote(
+    private static WorkMode ResolveWorkMode(
         string title,
         string? description,
         string? location,
@@ -131,26 +145,54 @@ public sealed partial class DefaultNormalizationService : INormalizationService
             metadata.TryGetValue("workplace", out var workplace) ? workplace : null
         }.Where(x => !string.IsNullOrWhiteSpace(x))).ToLowerInvariant();
 
-        return corpus.Contains("remote")
-            || corpus.Contains("remoto")
-            || corpus.Contains("work from home")
-            || corpus.Contains("teletrabajo")
-            || corpus.Contains("home office");
+        if (corpus.Contains("hybrid") || corpus.Contains("hibrid"))
+        {
+            return WorkMode.Hybrid;
+        }
+
+        if (corpus.Contains("remote") || corpus.Contains("remoto") || corpus.Contains("work from home") || corpus.Contains("teletrabajo") || corpus.Contains("home office"))
+        {
+            return WorkMode.Remote;
+        }
+
+        if (corpus.Contains("presencial") || corpus.Contains("on-site") || corpus.Contains("onsite"))
+        {
+            return WorkMode.OnSite;
+        }
+
+        return WorkMode.Unknown;
     }
 
-    private static (decimal? SalaryMin, decimal? SalaryMax, string? Currency) ParseSalary(string? salaryText)
+    private static (decimal? SalaryMin, decimal? SalaryMax, string? Currency) ParseSalary(
+        string? salaryText,
+        string title,
+        string? description,
+        IReadOnlyDictionary<string, string> metadata)
     {
-        if (string.IsNullOrWhiteSpace(salaryText))
+        var sourceText = string.Join(" ", new[]
+        {
+            salaryText,
+            title,
+            description,
+            metadata.TryGetValue("salary", out var salaryMetadata) ? salaryMetadata : null
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        if (string.IsNullOrWhiteSpace(sourceText))
         {
             return (null, null, null);
         }
 
-        var normalized = salaryText.ToLowerInvariant();
+        var normalized = sourceText.ToLowerInvariant();
         var currency = ResolveCurrency(normalized);
+        var hasKMultiplier = KMultiplierRegex.IsMatch(normalized);
         var values = NumberRegex.Matches(normalized)
             .Select(x => ParseDecimal(x.Value))
             .Where(x => x.HasValue)
-            .Select(x => x!.Value)
+            .Select(x =>
+            {
+                var value = x!.Value;
+                return hasKMultiplier && value < 1000m ? value * 1000m : value;
+            })
             .ToArray();
 
         return values.Length switch
@@ -163,19 +205,24 @@ public sealed partial class DefaultNormalizationService : INormalizationService
 
     private static string? ResolveCurrency(string text)
     {
-        if (text.Contains("usd") || text.Contains("us$"))
+        if (text.Contains("usd") || text.Contains("us$") || text.Contains("dolar"))
         {
             return "USD";
         }
 
-        if (text.Contains("eur") || text.Contains("€"))
+        if (text.Contains("eur") || text.Contains("€") || text.Contains("euro"))
         {
             return "EUR";
         }
 
-        if (text.Contains("cop") || text.Contains("col$") || text.Contains("colomb"))
+        if (text.Contains("cop") || text.Contains("col$") || text.Contains("colomb") || text.Contains("millones"))
         {
             return "COP";
+        }
+
+        if (text.Contains("mxn") || text.Contains("mx$"))
+        {
+            return "MXN";
         }
 
         return null;
@@ -223,4 +270,7 @@ public sealed partial class DefaultNormalizationService : INormalizationService
 
     [GeneratedRegex(@"(?<!\w)\d{1,3}(?:[.,\s]\d{3})*(?:[.,]\d+)?(?!\w)", RegexOptions.Compiled)]
     private static partial Regex SalaryNumberRegex();
+
+    [GeneratedRegex(@"\b\d+(?:[.,]\d+)?\s*k\b", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex KMultiplierPattern();
 }

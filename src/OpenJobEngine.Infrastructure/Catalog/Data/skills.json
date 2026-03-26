@@ -1,0 +1,281 @@
+[
+  {
+    "name": "C#",
+    "slug": "csharp",
+    "category": "Language",
+    "tokens": ["c#", "asp.net", ".net", "dotnet", ".net core"],
+    "aliases": ["dotnet", ".net"],
+    "equivalents": [],
+    "related": ["aspnet-core", "sql-server"]
+  },
+  {
+    "name": "Java",
+    "slug": "java",
+    "category": "Language",
+    "tokens": ["java", "spring boot", "spring"],
+    "aliases": ["jdk"],
+    "equivalents": [],
+    "related": ["spring-boot"]
+  },
+  {
+    "name": "JavaScript",
+    "slug": "javascript",
+    "category": "Language",
+    "tokens": ["javascript", "ecmascript", "js"],
+    "aliases": ["js"],
+    "equivalents": [],
+    "related": ["typescript", "nodejs", "react", "vue", "angular"]
+  },
+  {
+    "name": "TypeScript",
+    "slug": "typescript",
+    "category": "Language",
+    "tokens": ["typescript", "ts"],
+    "aliases": ["ts"],
+    "equivalents": [],
+    "related": ["javascript", "nodejs", "react", "angular"]
+  },
+  {
+    "name": "Python",
+    "slug": "python",
+    "category": "Language",
+    "tokens": ["python", "django", "fastapi", "flask"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["django", "fastapi"]
+  },
+  {
+    "name": "PHP",
+    "slug": "php",
+    "category": "Language",
+    "tokens": ["php", "laravel", "symfony"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["laravel"]
+  },
+  {
+    "name": "Go",
+    "slug": "go",
+    "category": "Language",
+    "tokens": ["golang", "go", "gin-gonic"],
+    "aliases": ["golang"],
+    "equivalents": [],
+    "related": []
+  },
+  {
+    "name": "Node.js",
+    "slug": "nodejs",
+    "category": "Framework",
+    "tokens": ["node.js", "nodejs", "nestjs", "express"],
+    "aliases": ["node", "nestjs", "express"],
+    "equivalents": [],
+    "related": ["javascript", "typescript"]
+  },
+  {
+    "name": "ASP.NET Core",
+    "slug": "aspnet-core",
+    "category": "Framework",
+    "tokens": ["asp.net core", "web api", "entity framework"],
+    "aliases": ["asp.net", ".net core"],
+    "equivalents": [],
+    "related": ["csharp", "sql-server"]
+  },
+  {
+    "name": "React",
+    "slug": "react",
+    "category": "Framework",
+    "tokens": ["react", "next.js", "nextjs"],
+    "aliases": ["next.js", "nextjs"],
+    "equivalents": [],
+    "related": ["javascript", "typescript"]
+  },
+  {
+    "name": "Angular",
+    "slug": "angular",
+    "category": "Framework",
+    "tokens": ["angular"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["typescript", "javascript"]
+  },
+  {
+    "name": "Vue",
+    "slug": "vue",
+    "category": "Framework",
+    "tokens": ["vue", "nuxt"],
+    "aliases": ["nuxt"],
+    "equivalents": [],
+    "related": ["javascript", "typescript"]
+  },
+  {
+    "name": "Spring Boot",
+    "slug": "spring-boot",
+    "category": "Framework",
+    "tokens": ["spring boot", "spring"],
+    "aliases": ["spring"],
+    "equivalents": [],
+    "related": ["java"]
+  },
+  {
+    "name": "Laravel",
+    "slug": "laravel",
+    "category": "Framework",
+    "tokens": ["laravel"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["php"]
+  },
+  {
+    "name": "Django",
+    "slug": "django",
+    "category": "Framework",
+    "tokens": ["django"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["python"]
+  },
+  {
+    "name": "FastAPI",
+    "slug": "fastapi",
+    "category": "Framework",
+    "tokens": ["fastapi"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["python"]
+  },
+  {
+    "name": "PostgreSQL",
+    "slug": "postgresql",
+    "category": "Database",
+    "tokens": ["postgresql", "postgres", "psql"],
+    "aliases": ["postgres"],
+    "equivalents": [],
+    "related": ["sql-server", "mysql"]
+  },
+  {
+    "name": "MySQL",
+    "slug": "mysql",
+    "category": "Database",
+    "tokens": ["mysql", "mariadb"],
+    "aliases": ["mariadb"],
+    "equivalents": [],
+    "related": ["postgresql", "sql-server"]
+  },
+  {
+    "name": "SQL Server",
+    "slug": "sql-server",
+    "category": "Database",
+    "tokens": ["sql server", "mssql"],
+    "aliases": ["mssql"],
+    "equivalents": [],
+    "related": ["postgresql", "mysql"]
+  },
+  {
+    "name": "MongoDB",
+    "slug": "mongodb",
+    "category": "Database",
+    "tokens": ["mongodb", "mongo"],
+    "aliases": ["mongo"],
+    "equivalents": [],
+    "related": ["redis"]
+  },
+  {
+    "name": "Redis",
+    "slug": "redis",
+    "category": "Database",
+    "tokens": ["redis"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["mongodb"]
+  },
+  {
+    "name": "Docker",
+    "slug": "docker",
+    "category": "Tool",
+    "tokens": ["docker", "container"],
+    "aliases": ["containers"],
+    "equivalents": [],
+    "related": ["kubernetes", "linux"]
+  },
+  {
+    "name": "Kubernetes",
+    "slug": "kubernetes",
+    "category": "Cloud",
+    "tokens": ["kubernetes", "k8s"],
+    "aliases": ["k8s"],
+    "equivalents": [],
+    "related": ["docker", "aws", "azure", "gcp"]
+  },
+  {
+    "name": "AWS",
+    "slug": "aws",
+    "category": "Cloud",
+    "tokens": ["aws", "amazon web services"],
+    "aliases": ["amazon web services"],
+    "equivalents": [],
+    "related": ["azure", "gcp", "terraform", "kubernetes"]
+  },
+  {
+    "name": "Azure",
+    "slug": "azure",
+    "category": "Cloud",
+    "tokens": ["azure"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["aws", "gcp", "terraform", "kubernetes"]
+  },
+  {
+    "name": "GCP",
+    "slug": "gcp",
+    "category": "Cloud",
+    "tokens": ["gcp", "google cloud"],
+    "aliases": ["google cloud"],
+    "equivalents": [],
+    "related": ["aws", "azure", "terraform", "kubernetes"]
+  },
+  {
+    "name": "Git",
+    "slug": "git",
+    "category": "Tool",
+    "tokens": ["git", "github", "gitlab", "bitbucket"],
+    "aliases": ["github", "gitlab", "bitbucket"],
+    "equivalents": [],
+    "related": ["cicd"]
+  },
+  {
+    "name": "CI/CD",
+    "slug": "cicd",
+    "category": "Tool",
+    "tokens": ["ci/cd", "cicd", "continuous integration", "continuous delivery"],
+    "aliases": ["continuous integration", "continuous delivery"],
+    "equivalents": [],
+    "related": ["git", "docker", "terraform"]
+  },
+  {
+    "name": "Terraform",
+    "slug": "terraform",
+    "category": "Cloud",
+    "tokens": ["terraform"],
+    "aliases": [],
+    "equivalents": [],
+    "related": ["aws", "azure", "gcp", "cicd"]
+  },
+  {
+    "name": "Linux",
+    "slug": "linux",
+    "category": "Tool",
+    "tokens": ["linux", "bash", "shell"],
+    "aliases": ["bash", "shell"],
+    "equivalents": [],
+    "related": ["docker"]
+  },
+  {
+    "name": "Scrum",
+    "slug": "scrum",
+    "category": "Methodology",
+    "tokens": ["scrum", "agile", "kanban"],
+    "aliases": ["agile", "kanban"],
+    "equivalents": [],
+    "related": []
+  }
+]

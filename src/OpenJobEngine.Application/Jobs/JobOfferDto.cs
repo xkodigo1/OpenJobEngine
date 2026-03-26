@@ -8,6 +8,10 @@ public sealed record JobOfferDto(
     string CompanyName,
     string? Description,
     string? LocationText,
+    string WorkMode,
+    string? City,
+    string? Region,
+    string? CountryCode,
     string EmploymentType,
     string SeniorityLevel,
     string? SalaryText,
@@ -20,8 +24,13 @@ public sealed record JobOfferDto(
     string SourceJobId,
     DateTimeOffset? PublishedAtUtc,
     DateTimeOffset CollectedAtUtc,
+    DateTimeOffset LastSeenAtUtc,
     string DeduplicationKey,
-    bool IsActive)
+    bool IsActive,
+    decimal QualityScore,
+    IReadOnlyCollection<string> QualityFlags,
+    IReadOnlyCollection<JobSkillTagDto> SkillTags,
+    IReadOnlyCollection<JobLanguageRequirementDto> LanguageRequirements)
 {
     public static JobOfferDto FromDomain(JobOffer job)
     {
@@ -31,6 +40,10 @@ public sealed record JobOfferDto(
             job.CompanyName,
             job.Description,
             job.LocationText,
+            job.WorkMode.ToString(),
+            job.City,
+            job.Region,
+            job.CountryCode,
             job.EmploymentType.ToString(),
             job.SeniorityLevel.ToString(),
             job.SalaryText,
@@ -43,7 +56,39 @@ public sealed record JobOfferDto(
             job.SourceJobId,
             job.PublishedAtUtc,
             job.CollectedAtUtc,
+            job.LastSeenAtUtc,
             job.DeduplicationKey,
-            job.IsActive);
+            job.IsActive,
+            job.QualityScore,
+            job.GetQualityFlags(),
+            job.SkillTags.Select(JobSkillTagDto.FromDomain).ToArray(),
+            job.LanguageRequirements.Select(JobLanguageRequirementDto.FromDomain).ToArray());
     }
+}
+
+public sealed record JobSkillTagDto(
+    string SkillName,
+    string SkillSlug,
+    string SkillCategory,
+    bool IsRequired,
+    decimal ConfidenceScore)
+{
+    public static JobSkillTagDto FromDomain(JobOfferSkillTag tag) =>
+        new(tag.SkillName, tag.SkillSlug, tag.SkillCategory.ToString(), tag.IsRequired, tag.ConfidenceScore);
+}
+
+public sealed record JobLanguageRequirementDto(
+    string LanguageCode,
+    string LanguageName,
+    string MinimumProficiency,
+    bool IsRequired,
+    decimal ConfidenceScore)
+{
+    public static JobLanguageRequirementDto FromDomain(JobOfferLanguageRequirement requirement) =>
+        new(
+            requirement.LanguageCode,
+            requirement.LanguageName,
+            requirement.MinimumProficiency.ToString(),
+            requirement.IsRequired,
+            requirement.ConfidenceScore);
 }

@@ -1,0 +1,21 @@
+{
+  "version": "2026.03.v1",
+  "skills": {
+    "equivalentSkillMultiplier": 0.8,
+    "relatedSkillMultiplier": 0.45
+  },
+  "weights": {
+    "requiredSkills": 30,
+    "optionalSkills": 15,
+    "seniority": 15,
+    "experienceYears": 10,
+    "locationWorkMode": 15,
+    "salary": 10,
+    "languages": 10
+  },
+  "penalties": {
+    "maxQualityPenalty": 15,
+    "lowQualityThreshold": 0.45,
+    "missingSkillSignalsPenalty": 8
+  }
+}

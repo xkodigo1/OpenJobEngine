@@ -19,4 +19,10 @@ public sealed class JobQueryService(IJobRepository jobRepository) : IJobQuerySer
         var job = await jobRepository.GetByIdAsync(id, cancellationToken);
         return job is null ? null : JobOfferDto.FromDomain(job);
     }
+
+    public async Task<IReadOnlyCollection<JobOfferHistoryEntryDto>> GetHistoryAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var history = await jobRepository.GetHistoryAsync(id, cancellationToken);
+        return history.Select(JobOfferHistoryEntryDto.FromDomain).ToArray();
+    }
 }

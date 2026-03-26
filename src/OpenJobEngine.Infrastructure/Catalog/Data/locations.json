@@ -1,0 +1,10 @@
+[
+  { "key": "bogota", "city": "Bogota", "region": "Cundinamarca", "countryCode": "CO", "aliases": ["bogota", "bogotá"] },
+  { "key": "medellin", "city": "Medellin", "region": "Antioquia", "countryCode": "CO", "aliases": ["medellin", "medellín"] },
+  { "key": "cali", "city": "Cali", "region": "Valle del Cauca", "countryCode": "CO", "aliases": ["cali"] },
+  { "key": "buenos-aires", "city": "Buenos Aires", "region": "Buenos Aires", "countryCode": "AR", "aliases": ["buenos aires"] },
+  { "key": "mexico-city", "city": "Mexico City", "region": "CDMX", "countryCode": "MX", "aliases": ["mexico city", "ciudad de mexico", "ciudad de méxico"] },
+  { "key": "lima", "city": "Lima", "region": "Lima", "countryCode": "PE", "aliases": ["lima"] },
+  { "key": "santiago", "city": "Santiago", "region": "Region Metropolitana", "countryCode": "CL", "aliases": ["santiago"] },
+  { "key": "remote-latam", "city": "Remote", "region": null, "countryCode": "LATAM", "aliases": ["remote latam"] }
+]

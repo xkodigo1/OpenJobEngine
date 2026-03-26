@@ -8,6 +8,18 @@ namespace OpenJobEngine.Infrastructure.Persistence.Repositories;
 
 public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepository
 {
+    private static string NormalizeQueryTerm(string value)
+    {
+        return value.Trim().ToLowerInvariant();
+    }
+
+    private IQueryable<JobOffer> QueryWithDetails()
+    {
+        return dbContext.JobOffers
+            .Include(x => x.SkillTags)
+            .Include(x => x.LanguageRequirements);
+    }
+
     public async Task AddAsync(JobOffer job, CancellationToken cancellationToken)
     {
         await dbContext.JobOffers.AddAsync(job, cancellationToken);
@@ -21,23 +33,72 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
 
     public Task<JobOffer?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return dbContext.JobOffers
-            .AsNoTracking()
+        return QueryWithDetails()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public Task<JobOffer?> GetByDedupKeyAsync(string key, CancellationToken cancellationToken)
     {
-        return dbContext.JobOffers
+        return QueryWithDetails()
+            .Include(x => x.SourceObservations)
             .FirstOrDefaultAsync(x => x.DeduplicationKey == key, cancellationToken);
     }
 
     public Task<JobOffer?> GetBySourceAsync(string sourceName, string sourceJobId, CancellationToken cancellationToken)
     {
-        return dbContext.JobOffers
+        return QueryWithDetails()
+            .Include(x => x.SourceObservations)
             .FirstOrDefaultAsync(
                 x => x.SourceName == sourceName && x.SourceJobId == sourceJobId,
                 cancellationToken);
+    }
+
+    public Task<JobOfferSourceObservation?> GetObservationAsync(string sourceName, string sourceJobId, CancellationToken cancellationToken)
+    {
+        return dbContext.JobOfferSourceObservations
+            .FirstOrDefaultAsync(
+                x => x.SourceName == sourceName && x.SourceJobId == sourceJobId,
+                cancellationToken);
+    }
+
+    public async Task AddObservationAsync(JobOfferSourceObservation observation, CancellationToken cancellationToken)
+    {
+        await dbContext.JobOfferSourceObservations.AddAsync(observation, cancellationToken);
+    }
+
+    public Task UpdateObservationAsync(JobOfferSourceObservation observation, CancellationToken cancellationToken)
+    {
+        dbContext.JobOfferSourceObservations.Update(observation);
+        return Task.CompletedTask;
+    }
+
+    public async Task<IReadOnlyCollection<JobOfferSourceObservation>> GetActiveObservationsBySourceAsync(string sourceName, CancellationToken cancellationToken)
+    {
+        return await dbContext.JobOfferSourceObservations
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.SourceName == sourceName)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<JobOfferSourceObservation>> GetObservationsByJobIdAsync(Guid jobId, CancellationToken cancellationToken)
+    {
+        return await dbContext.JobOfferSourceObservations
+            .Where(x => x.JobOfferId == jobId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task AddHistoryEntryAsync(JobOfferHistoryEntry entry, CancellationToken cancellationToken)
+    {
+        await dbContext.JobOfferHistoryEntries.AddAsync(entry, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<JobOfferHistoryEntry>> GetHistoryAsync(Guid jobId, CancellationToken cancellationToken)
+    {
+        return await dbContext.JobOfferHistoryEntries
+            .AsNoTracking()
+            .Where(x => x.JobOfferId == jobId)
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<PagedResult<JobOffer>> SearchAsync(JobSearchFilter filter, CancellationToken cancellationToken)
@@ -50,21 +111,24 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
             _ => filter.PageSize
         };
 
-        var query = dbContext.JobOffers.AsNoTracking().Where(x => x.IsActive);
+        var query = QueryWithDetails().AsNoTracking().Where(x => x.IsActive);
 
         if (!string.IsNullOrWhiteSpace(filter.Query))
         {
-            var pattern = $"%{filter.Query.Trim()}%";
+            var pattern = NormalizeQueryTerm(filter.Query);
             query = query.Where(x =>
-                EF.Functions.ILike(x.Title, pattern) ||
-                EF.Functions.ILike(x.CompanyName, pattern) ||
-                (x.Description != null && EF.Functions.ILike(x.Description, pattern)));
+                x.Title.ToLower().Contains(pattern) ||
+                x.CompanyName.ToLower().Contains(pattern) ||
+                (x.Description != null && x.Description.ToLower().Contains(pattern)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Location))
         {
-            var pattern = $"%{filter.Location.Trim()}%";
-            query = query.Where(x => x.LocationText != null && EF.Functions.ILike(x.LocationText, pattern));
+            var pattern = NormalizeQueryTerm(filter.Location);
+            query = query.Where(x =>
+                (x.LocationText != null && x.LocationText.ToLower().Contains(pattern)) ||
+                (x.City != null && x.City.ToLower().Contains(pattern)) ||
+                (x.Region != null && x.Region.ToLower().Contains(pattern)));
         }
 
         if (filter.Remote.HasValue)
@@ -84,7 +148,8 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
 
         if (!string.IsNullOrWhiteSpace(filter.Source))
         {
-            query = query.Where(x => EF.Functions.ILike(x.SourceName, filter.Source));
+            var source = NormalizeQueryTerm(filter.Source);
+            query = query.Where(x => x.SourceName.ToLower().Contains(source));
         }
 
         var totalCount = await query.LongCountAsync(cancellationToken);
@@ -95,5 +160,63 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
             .ToListAsync(cancellationToken);
 
         return new PagedResult<JobOffer>(items, page, pageSize, totalCount);
+    }
+
+    public async Task<IReadOnlyCollection<JobOffer>> ListActiveAsync(CancellationToken cancellationToken)
+    {
+        return await QueryWithDetails()
+            .AsNoTracking()
+            .Where(x => x.IsActive)
+            .OrderByDescending(x => x.PublishedAtUtc ?? x.CollectedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<long> CountAsync(bool activeOnly, CancellationToken cancellationToken)
+    {
+        var query = dbContext.JobOffers.AsNoTracking();
+        if (activeOnly)
+        {
+            query = query.Where(x => x.IsActive);
+        }
+
+        return query.LongCountAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<ProviderQualityMetricsDto>> GetProviderQualityMetricsAsync(CancellationToken cancellationToken)
+    {
+        var rows = await dbContext.JobOfferSourceObservations
+            .AsNoTracking()
+            .Where(x => x.IsActive)
+            .Join(
+                dbContext.JobOffers.AsNoTracking(),
+                observation => observation.JobOfferId,
+                job => job.Id,
+                (observation, job) => new
+                {
+                    observation.SourceName,
+                    job.QualityScore,
+                    HasSalary = job.SalaryMin != null || job.SalaryMax != null,
+                    HasLocation = job.CountryCode != null || job.City != null || job.Region != null,
+                    HasSkills = dbContext.JobOfferSkillTags.Any(tag => tag.JobOfferId == job.Id),
+                    HasLanguages = dbContext.JobOfferLanguageRequirements.Any(language => language.JobOfferId == job.Id)
+                })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(x => x.SourceName, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var total = group.Count();
+                return new ProviderQualityMetricsDto(
+                    group.Key,
+                    total,
+                    total == 0 ? 0m : decimal.Round(group.Average(x => x.QualityScore), 2),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasSalary) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasLocation) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasSkills) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasLanguages) / (decimal)total, 4));
+            })
+            .OrderByDescending(x => x.TotalActiveJobs)
+            .ToArray();
     }
 }

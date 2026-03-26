@@ -5,4 +5,6 @@ public sealed class ProviderCatalogOptions
     public ComputrabajoProviderOptions Computrabajo { get; init; } = new();
 
     public AdzunaProviderOptions Adzuna { get; init; } = new();
+
+    public GreenhouseProviderOptions Greenhouse { get; init; } = new();
 }

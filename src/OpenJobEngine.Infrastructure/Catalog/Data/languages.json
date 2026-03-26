@@ -1,0 +1,5 @@
+[
+  { "code": "en", "name": "English", "tokens": ["english", "ingles", "ingles avanzado", "ingles intermedio"] },
+  { "code": "es", "name": "Spanish", "tokens": ["spanish", "espanol", "español"] },
+  { "code": "pt", "name": "Portuguese", "tokens": ["portuguese", "portugues", "portugués"] }
+]
