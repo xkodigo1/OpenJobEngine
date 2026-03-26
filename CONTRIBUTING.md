@@ -1,22 +1,66 @@
 # Contributing
 
-## Principios
+## Principles
 
-- Respeta la arquitectura por capas.
-- No añadas lógica de negocio en controllers ni providers.
-- Los providers sólo recolectan y parsean `RawJobOffer`.
-- Mantén los cambios pequeños y documentados.
+- Respect the layered architecture.
+- Keep business rules out of controllers and providers.
+- Providers only collect and parse `RawJobOffer`.
+- Keep changes small, focused and documented.
+- Use Conventional Commits with gitmoji in the subject line.
 
-## Flujo recomendado
+## Git Flow
 
-1. Crea una rama desde `main`.
-2. Implementa cambios por capa.
-3. Documenta cualquier provider nuevo en `docs/adding-providers.md`.
-4. Ejecuta verificaciones manuales antes de abrir PR.
+OpenJobEngine uses Git Flow as the default development model.
 
-## Convenciones
+- Permanent branches:
+  - `main`: production-ready branch
+  - `develop`: integration branch for completed work
+- Temporary branches:
+  - `feature/*`
+  - `release/*`
+  - `hotfix/*`
 
-- `Domain` no depende de otras capas.
-- `Application` define contratos y casos de uso.
-- `Infrastructure` implementa adaptadores externos.
-- `Api` y `Worker` sólo orquestan mediante DI.
+Rules:
+
+- Never develop directly on `main` or `develop`.
+- Start all new work from `develop`.
+- Rebase your feature branch on top of `origin/develop` before finishing it.
+- Squash your feature commits before finishing the branch.
+- Only release branches and hotfix branches may land in `main`.
+
+Repository helpers:
+
+- Windows: `.\scripts\gitflow.ps1 <command>`
+- Linux/macOS: `./scripts/gitflow.sh <command>`
+
+Supported commands:
+
+- `init`
+- `feature-start <name>`
+- `feature-sync`
+- `feature-finish [name]`
+- `release-start <version>`
+- `release-finish [version]`
+- `hotfix-start <version>`
+- `hotfix-finish [version]`
+
+Full repo-specific guidance lives in `docs/gitflow.md`.
+
+## Verification before finishing a branch
+
+The original Git Flow guide mentions `tsc` and `npm run build`. For this repository the equivalent verification is:
+
+```bash
+dotnet restore OpenJobEngine.sln
+dotnet build OpenJobEngine.sln -c Release
+```
+
+The helper scripts run these checks before finishing `feature/*`, `release/*` and `hotfix/*` branches.
+
+## Architecture conventions
+
+- `Domain` does not depend on other layers.
+- `Application` defines contracts and use cases.
+- `Infrastructure` implements adapters and persistence.
+- `Api` and `Worker` only orchestrate through DI.
+- Document every new provider in `docs/adding-providers.md`.

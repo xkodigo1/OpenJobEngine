@@ -62,6 +62,32 @@ Linux/macOS:
 ./scripts/start-worker.sh
 ```
 
+## Git Flow
+
+The repository uses Git Flow for day-to-day development:
+
+- `main`: production-ready branch
+- `develop`: integration branch
+- `feature/*`, `release/*`, `hotfix/*`: temporary branches
+
+Helper scripts:
+
+```powershell
+.\scripts\gitflow.ps1 init
+.\scripts\gitflow.ps1 feature-start nombre-de-feature
+.\scripts\gitflow.ps1 feature-sync
+.\scripts\gitflow.ps1 feature-finish
+```
+
+```bash
+./scripts/gitflow.sh init
+./scripts/gitflow.sh feature-start nombre-de-feature
+./scripts/gitflow.sh feature-sync
+./scripts/gitflow.sh feature-finish
+```
+
+Repo-specific guidance: `docs/gitflow.md`
+
 Tambien puedes correr directamente:
 
 ```bash
