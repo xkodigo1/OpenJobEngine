@@ -28,21 +28,7 @@ Rules:
 - Squash your feature commits before finishing the branch.
 - Only release branches and hotfix branches may land in `main`.
 
-Repository helpers:
-
-- Windows: `.\scripts\gitflow.ps1 <command>`
-- Linux/macOS: `./scripts/gitflow.sh <command>`
-
-Supported commands:
-
-- `init`
-- `feature-start <name>`
-- `feature-sync`
-- `feature-finish [name]`
-- `release-start <version>`
-- `release-finish [version]`
-- `hotfix-start <version>`
-- `hotfix-finish [version]`
+Use Git Flow directly through `git flow` or equivalent branch operations.
 
 Full repo-specific guidance lives in `docs/gitflow.md`.
 
@@ -55,7 +41,7 @@ dotnet restore OpenJobEngine.sln
 dotnet build OpenJobEngine.sln -c Release
 ```
 
-The helper scripts run these checks before finishing `feature/*`, `release/*` and `hotfix/*` branches.
+Run these checks before finishing `feature/*`, `release/*` and `hotfix/*` branches.
 
 ## Architecture conventions
 

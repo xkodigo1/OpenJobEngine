@@ -17,61 +17,42 @@ Temporary branches:
 
 ## Local initialization
 
-Windows:
+The repository already has `develop` published in `origin`.
 
-```powershell
-.\scripts\gitflow.ps1 init
-```
-
-Linux/macOS:
+Initialize your local git-flow config with:
 
 ```bash
-./scripts/gitflow.sh init
+git flow init --preset=classic --main main --develop develop --tag v
 ```
-
-What it does:
-
-- ensures `develop` exists locally from `main`
-- pushes `develop` to `origin` if needed
-- initializes local `git flow` config with:
-  - `main`
-  - `develop`
-  - `feature/`
-  - `release/`
-  - `hotfix/`
-  - tag prefix `v`
 
 ## Feature flow
 
 Start:
 
 ```powershell
-.\scripts\gitflow.ps1 feature-start candidate-alerts
+git flow feature start candidate-alerts
 ```
 
 ```bash
-./scripts/gitflow.sh feature-start candidate-alerts
+git flow feature start candidate-alerts
 ```
 
 Sync with latest `develop`:
 
-```powershell
-.\scripts\gitflow.ps1 feature-sync
-```
-
 ```bash
-./scripts/gitflow.sh feature-sync
+git fetch origin
+git rebase origin/develop
 ```
 
 Finish:
 
 ```powershell
-.\scripts\gitflow.ps1 feature-finish
+git flow feature finish candidate-alerts
 git push origin develop
 ```
 
 ```bash
-./scripts/gitflow.sh feature-finish
+git flow feature finish candidate-alerts
 git push origin develop
 ```
 
@@ -80,7 +61,7 @@ Before finish:
 - squash your feature commits
 - ensure the branch is clean
 - rebase on top of `origin/develop`
-- let the helper run:
+- run:
 
 ```bash
 dotnet restore OpenJobEngine.sln
@@ -92,23 +73,23 @@ dotnet build OpenJobEngine.sln -c Release
 Start:
 
 ```powershell
-.\scripts\gitflow.ps1 release-start v1.2.0
+git flow release start v1.2.0
 ```
 
 ```bash
-./scripts/gitflow.sh release-start v1.2.0
+git flow release start v1.2.0
 ```
 
 Finish:
 
 ```powershell
-.\scripts\gitflow.ps1 release-finish
+git flow release finish v1.2.0
 git push origin develop
 git push origin main --tags
 ```
 
 ```bash
-./scripts/gitflow.sh release-finish
+git flow release finish v1.2.0
 git push origin develop
 git push origin main --tags
 ```
@@ -120,23 +101,23 @@ Release branches are only for minor fixes, docs and versioning work. Do not add 
 Start:
 
 ```powershell
-.\scripts\gitflow.ps1 hotfix-start v1.2.1
+git flow hotfix start v1.2.1
 ```
 
 ```bash
-./scripts/gitflow.sh hotfix-start v1.2.1
+git flow hotfix start v1.2.1
 ```
 
 Finish:
 
 ```powershell
-.\scripts\gitflow.ps1 hotfix-finish
+git flow hotfix finish v1.2.1
 git push origin develop
 git push origin main --tags
 ```
 
 ```bash
-./scripts/gitflow.sh hotfix-finish
+git flow hotfix finish v1.2.1
 git push origin develop
 git push origin main --tags
 ```

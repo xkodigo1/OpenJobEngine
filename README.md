@@ -70,20 +70,12 @@ The repository uses Git Flow for day-to-day development:
 - `develop`: integration branch
 - `feature/*`, `release/*`, `hotfix/*`: temporary branches
 
-Helper scripts:
-
-```powershell
-.\scripts\gitflow.ps1 init
-.\scripts\gitflow.ps1 feature-start nombre-de-feature
-.\scripts\gitflow.ps1 feature-sync
-.\scripts\gitflow.ps1 feature-finish
-```
+Direct commands:
 
 ```bash
-./scripts/gitflow.sh init
-./scripts/gitflow.sh feature-start nombre-de-feature
-./scripts/gitflow.sh feature-sync
-./scripts/gitflow.sh feature-finish
+git flow init --preset=classic --main main --develop develop --tag v
+git flow feature start nombre-de-feature
+git flow feature finish nombre-de-feature
 ```
 
 Repo-specific guidance: `docs/gitflow.md`
