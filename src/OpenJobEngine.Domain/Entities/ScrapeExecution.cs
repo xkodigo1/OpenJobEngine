@@ -34,6 +34,8 @@ public sealed class ScrapeExecution
 
     public int DeduplicatedJobs { get; private set; }
 
+    public int DeactivatedJobs { get; private set; }
+
     public string? ErrorMessage { get; private set; }
 
     public static ScrapeExecution Start(string sourceName, DateTimeOffset startedAtUtc)
@@ -46,13 +48,15 @@ public sealed class ScrapeExecution
         int totalCollected,
         int createdJobs,
         int updatedJobs,
-        int deduplicatedJobs)
+        int deduplicatedJobs,
+        int deactivatedJobs)
     {
         CompletedAtUtc = completedAtUtc;
         TotalCollected = totalCollected;
         CreatedJobs = createdJobs;
         UpdatedJobs = updatedJobs;
         DeduplicatedJobs = deduplicatedJobs;
+        DeactivatedJobs = deactivatedJobs;
         Status = ScrapeExecutionStatus.Completed;
         ErrorMessage = null;
     }

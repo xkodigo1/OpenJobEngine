@@ -15,6 +15,8 @@ public sealed class ProfileAlert
         AlertChannelType channelType,
         string? target,
         decimal? minimumMatchScore,
+        decimal? minimumNewMatchScore,
+        bool onlyNewJobs,
         bool isActive)
     {
         Id = id;
@@ -23,8 +25,11 @@ public sealed class ProfileAlert
         ChannelType = channelType;
         Target = target;
         MinimumMatchScore = minimumMatchScore;
+        MinimumNewMatchScore = minimumNewMatchScore;
+        OnlyNewJobs = onlyNewJobs;
         IsActive = isActive;
         CreatedAtUtc = DateTimeOffset.UtcNow;
+        LastCheckedAtUtc = null;
     }
 
     public Guid Id { get; private set; }
@@ -39,12 +44,23 @@ public sealed class ProfileAlert
 
     public decimal? MinimumMatchScore { get; private set; }
 
+    public decimal? MinimumNewMatchScore { get; private set; }
+
+    public bool OnlyNewJobs { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
+    public DateTimeOffset? LastCheckedAtUtc { get; private set; }
+
+    public void MarkChecked(DateTimeOffset checkedAtUtc)
+    {
+        LastCheckedAtUtc = checkedAtUtc;
+    }
+
     public ProfileAlert CloneForProfile(Guid candidateProfileId)
     {
-        return new ProfileAlert(Guid.NewGuid(), candidateProfileId, Name, ChannelType, Target, MinimumMatchScore, IsActive);
+        return new ProfileAlert(Guid.NewGuid(), candidateProfileId, Name, ChannelType, Target, MinimumMatchScore, MinimumNewMatchScore, OnlyNewJobs, IsActive);
     }
 }

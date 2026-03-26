@@ -36,6 +36,7 @@ public sealed partial class DefaultNormalizationService : INormalizationService
             null,
             null,
             null,
+            null,
             salaryText,
             salaryMin,
             salaryMax,

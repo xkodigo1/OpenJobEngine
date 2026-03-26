@@ -24,7 +24,7 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
     {
         var corpus = $"{jobOffer.Title} {jobOffer.Description} {jobOffer.LocationText}".ToLowerInvariant();
         var workMode = ResolveWorkMode(corpus, rawJobOffer.Metadata, jobOffer.WorkMode);
-        var (city, region, countryCode) = ResolveLocation(jobOffer.LocationText, rawJobOffer.Metadata);
+        var (city, region, countryCode, timeZone) = ResolveLocation(jobOffer.LocationText, rawJobOffer.Metadata);
         var skillTags = ExtractSkillTags(jobOffer.Id, corpus);
         var languageRequirements = ExtractLanguageRequirements(jobOffer.Id, corpus);
         var seniorityLevel = ResolveSeniority(corpus, jobOffer.SeniorityLevel);
@@ -33,7 +33,7 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         var qualityScore = CalculateQualityScore(jobOffer, skillTags.Count, languageRequirements.Count, qualityFlags.Count, workMode, countryCode);
 
         jobOffer.SetSeniorityLevel(seniorityLevel);
-        jobOffer.SetLocation(city, region, countryCode, workMode);
+        jobOffer.SetLocation(city, region, countryCode, timeZone, workMode);
         jobOffer.SetSalary(jobOffer.SalaryText, salaryMin, salaryMax, salaryCurrency);
         jobOffer.ReplaceSkillTags(skillTags);
         jobOffer.ReplaceLanguageRequirements(languageRequirements);
@@ -70,7 +70,7 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         return WorkMode.Unknown;
     }
 
-    private (string? City, string? Region, string? CountryCode) ResolveLocation(string? locationText, IReadOnlyDictionary<string, string> metadata)
+    private (string? City, string? Region, string? CountryCode, string? TimeZone) ResolveLocation(string? locationText, IReadOnlyDictionary<string, string> metadata)
     {
         var candidates = new[]
         {
@@ -91,12 +91,12 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             {
                 if (location.Aliases.Any(alias => normalized.Contains(alias, StringComparison.OrdinalIgnoreCase)))
                 {
-                    return (location.City, location.Region, location.CountryCode);
+                    return (location.City, location.Region, location.CountryCode, location.TimeZone);
                 }
             }
         }
 
-        return (null, null, null);
+        return (null, null, null, null);
     }
 
     private IReadOnlyCollection<JobOfferSkillTag> ExtractSkillTags(Guid jobId, string corpus)

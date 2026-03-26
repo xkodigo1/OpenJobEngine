@@ -15,6 +15,8 @@ public sealed class SavedSearch
         bool? remoteOnly,
         decimal? minimumSalary,
         decimal? minimumMatchScore,
+        decimal? minimumNewMatchScore,
+        bool onlyNewJobs,
         string? source,
         bool isActive)
     {
@@ -26,6 +28,8 @@ public sealed class SavedSearch
         RemoteOnly = remoteOnly;
         MinimumSalary = minimumSalary;
         MinimumMatchScore = minimumMatchScore;
+        MinimumNewMatchScore = minimumNewMatchScore;
+        OnlyNewJobs = onlyNewJobs;
         Source = source;
         IsActive = isActive;
         CreatedAtUtc = DateTimeOffset.UtcNow;
@@ -47,6 +51,10 @@ public sealed class SavedSearch
 
     public decimal? MinimumMatchScore { get; private set; }
 
+    public decimal? MinimumNewMatchScore { get; private set; }
+
+    public bool OnlyNewJobs { get; private set; }
+
     public string? Source { get; private set; }
 
     public bool IsActive { get; private set; }
@@ -55,6 +63,6 @@ public sealed class SavedSearch
 
     public SavedSearch CloneForProfile(Guid candidateProfileId)
     {
-        return new SavedSearch(Guid.NewGuid(), candidateProfileId, Name, Query, Location, RemoteOnly, MinimumSalary, MinimumMatchScore, Source, IsActive);
+        return new SavedSearch(Guid.NewGuid(), candidateProfileId, Name, Query, Location, RemoteOnly, MinimumSalary, MinimumMatchScore, MinimumNewMatchScore, OnlyNewJobs, Source, IsActive);
     }
 }

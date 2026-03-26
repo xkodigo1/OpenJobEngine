@@ -12,6 +12,8 @@ public sealed class LocationPreference
 
     public string? TargetCountriesCsv { get; private set; }
 
+    public string? TargetTimezonesCsv { get; private set; }
+
     public bool IsWillingToRelocate { get; private set; }
 
     public static LocationPreference Empty() => new();
@@ -22,6 +24,7 @@ public sealed class LocationPreference
         string? currentCountryCode,
         IEnumerable<string>? targetCities,
         IEnumerable<string>? targetCountries,
+        IEnumerable<string>? targetTimezones,
         bool isWillingToRelocate)
     {
         CurrentCity = NormalizeValue(currentCity);
@@ -29,6 +32,7 @@ public sealed class LocationPreference
         CurrentCountryCode = NormalizeCountry(currentCountryCode);
         TargetCitiesCsv = JoinValues(targetCities);
         TargetCountriesCsv = JoinCountries(targetCountries);
+        TargetTimezonesCsv = JoinValues(targetTimezones);
         IsWillingToRelocate = isWillingToRelocate;
     }
 
@@ -40,6 +44,11 @@ public sealed class LocationPreference
     public IReadOnlyCollection<string> GetTargetCountries()
     {
         return SplitCsv(TargetCountriesCsv);
+    }
+
+    public IReadOnlyCollection<string> GetTargetTimezones()
+    {
+        return SplitCsv(TargetTimezonesCsv);
     }
 
     private static string? JoinValues(IEnumerable<string>? values)

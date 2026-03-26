@@ -96,7 +96,11 @@ public sealed partial class HeuristicResumeProfileExtractor : IResumeProfileExtr
             countryCode,
             city is null ? Array.Empty<string>() : [city],
             Array.Empty<string>(),
+            Array.Empty<string>(),
             false,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<string>(),
             detectedSkills,
             detectedLanguages);
 

@@ -7,5 +7,7 @@ public sealed record SavedSearchCreateRequest(
     bool? RemoteOnly,
     decimal? MinimumSalary,
     decimal? MinimumMatchScore,
+    decimal? MinimumNewMatchScore,
+    bool OnlyNewJobs,
     string? Source,
     bool IsActive);

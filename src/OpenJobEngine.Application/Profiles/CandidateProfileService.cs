@@ -53,7 +53,9 @@ public sealed class CandidateProfileService(
             request.CurrentCountryCode,
             request.TargetCities,
             request.TargetCountries,
+            request.TargetTimezones,
             request.IsWillingToRelocate);
+        profile.UpdateOperationalPreferences(request.ExcludedWorkModes, request.IncludedCompanyKeywords, request.ExcludedCompanyKeywords);
 
         await candidateProfileRepository.UpdateAsync(profile, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -111,6 +113,8 @@ public sealed class CandidateProfileService(
             request.RemoteOnly,
             request.MinimumSalary,
             request.MinimumMatchScore,
+            request.MinimumNewMatchScore,
+            request.OnlyNewJobs,
             request.Source,
             request.IsActive);
 
@@ -135,6 +139,8 @@ public sealed class CandidateProfileService(
             Enum.TryParse<AlertChannelType>(request.ChannelType, true, out var channelType) ? channelType : AlertChannelType.Passive,
             request.Target,
             request.MinimumMatchScore,
+            request.MinimumNewMatchScore,
+            request.OnlyNewJobs,
             request.IsActive);
 
         profile.AddAlert(alert);
@@ -161,7 +167,9 @@ public sealed class CandidateProfileService(
             request.CurrentCountryCode,
             request.TargetCities,
             request.TargetCountries,
+            request.TargetTimezones,
             request.IsWillingToRelocate);
+        profile.UpdateOperationalPreferences(request.ExcludedWorkModes, request.IncludedCompanyKeywords, request.ExcludedCompanyKeywords);
         profile.ReplaceSkills(MapSkills(profile.Id, request.Skills));
         profile.ReplaceLanguages(MapLanguages(profile.Id, request.Languages));
     }

@@ -5,4 +5,5 @@ public sealed record CatalogLocationDefinition(
     string City,
     string? Region,
     string CountryCode,
+    string? TimeZone,
     IReadOnlyCollection<string> Aliases);

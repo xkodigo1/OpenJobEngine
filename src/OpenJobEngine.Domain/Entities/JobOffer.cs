@@ -25,6 +25,7 @@ public sealed class JobOffer
         string? city,
         string? region,
         string? countryCode,
+        string? timeZone,
         string? salaryText,
         decimal? salaryMin,
         decimal? salaryMax,
@@ -52,6 +53,7 @@ public sealed class JobOffer
         City = city;
         Region = region;
         CountryCode = countryCode;
+        TimeZone = timeZone;
         SalaryText = salaryText;
         SalaryMin = salaryMin;
         SalaryMax = salaryMax;
@@ -90,6 +92,8 @@ public sealed class JobOffer
     public string? Region { get; private set; }
 
     public string? CountryCode { get; private set; }
+
+    public string? TimeZone { get; private set; }
 
     public string? SalaryText { get; private set; }
 
@@ -141,6 +145,7 @@ public sealed class JobOffer
         City = incoming.City;
         Region = incoming.Region;
         CountryCode = incoming.CountryCode;
+        TimeZone = incoming.TimeZone;
         SalaryText = incoming.SalaryText;
         SalaryMin = incoming.SalaryMin;
         SalaryMax = incoming.SalaryMax;
@@ -179,11 +184,12 @@ public sealed class JobOffer
         IsActive = true;
     }
 
-    public void SetLocation(string? city, string? region, string? countryCode, WorkMode workMode)
+    public void SetLocation(string? city, string? region, string? countryCode, string? timeZone, WorkMode workMode)
     {
         City = string.IsNullOrWhiteSpace(city) ? null : city.Trim();
         Region = string.IsNullOrWhiteSpace(region) ? null : region.Trim();
         CountryCode = string.IsNullOrWhiteSpace(countryCode) ? null : countryCode.Trim().ToUpperInvariant();
+        TimeZone = string.IsNullOrWhiteSpace(timeZone) ? null : timeZone.Trim();
         WorkMode = workMode;
         IsRemote = workMode == WorkMode.Remote;
     }

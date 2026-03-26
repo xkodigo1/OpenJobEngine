@@ -59,7 +59,7 @@ public sealed class JsonTechnologyTaxonomyProvider : ITechnologyTaxonomyProvider
                     x.Related ?? []))
                 .ToArray(),
             languages.Select(x => new CatalogLanguageDefinition(x.Code, x.Name, x.Tokens)).ToArray(),
-            locations.Select(x => new CatalogLocationDefinition(x.Key, x.City, x.Region, x.CountryCode, x.Aliases)).ToArray());
+            locations.Select(x => new CatalogLocationDefinition(x.Key, x.City, x.Region, x.CountryCode, x.TimeZone, x.Aliases)).ToArray());
     }
 
     private sealed record CatalogSnapshot(
@@ -78,5 +78,5 @@ public sealed class JsonTechnologyTaxonomyProvider : ITechnologyTaxonomyProvider
 
     private sealed record LanguageRecord(string Code, string Name, IReadOnlyCollection<string> Tokens);
 
-    private sealed record LocationRecord(string Key, string City, string? Region, string CountryCode, IReadOnlyCollection<string> Aliases);
+    private sealed record LocationRecord(string Key, string City, string? Region, string CountryCode, string? TimeZone, IReadOnlyCollection<string> Aliases);
 }

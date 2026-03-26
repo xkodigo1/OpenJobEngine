@@ -82,9 +82,19 @@ public sealed class CandidateProfile
         string? currentCountryCode,
         IEnumerable<string>? targetCities,
         IEnumerable<string>? targetCountries,
+        IEnumerable<string>? targetTimezones,
         bool isWillingToRelocate)
     {
-        LocationPreference.Update(currentCity, currentRegion, currentCountryCode, targetCities, targetCountries, isWillingToRelocate);
+        LocationPreference.Update(currentCity, currentRegion, currentCountryCode, targetCities, targetCountries, targetTimezones, isWillingToRelocate);
+        Touch();
+    }
+
+    public void UpdateOperationalPreferences(
+        IEnumerable<string>? excludedWorkModes,
+        IEnumerable<string>? includedCompanyKeywords,
+        IEnumerable<string>? excludedCompanyKeywords)
+    {
+        Preferences.UpdateOperationalPreferences(excludedWorkModes, includedCompanyKeywords, excludedCompanyKeywords);
         Touch();
     }
 

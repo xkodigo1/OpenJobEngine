@@ -48,8 +48,23 @@ public sealed class DeterministicMatchingService(
 
         var pagedItems = matches.Skip((page - 1) * pageSize).Take(pageSize).ToArray();
 
+        decimal? averageScore = matches.Length == 0 ? null : matches.Average(x => x.MatchScore);
+        var highMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.High.ToString(), StringComparison.OrdinalIgnoreCase));
+        var mediumMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.Medium.ToString(), StringComparison.OrdinalIgnoreCase));
+        var lowMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.Low.ToString(), StringComparison.OrdinalIgnoreCase));
+
         await matchExecutionRepository.AddAsync(
-            new MatchExecution(Guid.NewGuid(), request.ProfileId, request.Query, pagedItems.Length, pagedItems.FirstOrDefault()?.MatchScore, rules.Version),
+            new MatchExecution(
+                Guid.NewGuid(),
+                request.ProfileId,
+                request.Query,
+                pagedItems.Length,
+                pagedItems.FirstOrDefault()?.MatchScore,
+                averageScore,
+                highMatchCount,
+                mediumMatchCount,
+                lowMatchCount,
+                rules.Version),
             cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

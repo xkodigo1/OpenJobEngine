@@ -10,6 +10,8 @@ public sealed record SavedSearchDto(
     bool? RemoteOnly,
     decimal? MinimumSalary,
     decimal? MinimumMatchScore,
+    decimal? MinimumNewMatchScore,
+    bool OnlyNewJobs,
     string? Source,
     bool IsActive,
     DateTimeOffset CreatedAtUtc)
@@ -23,6 +25,8 @@ public sealed record SavedSearchDto(
             search.RemoteOnly,
             search.MinimumSalary,
             search.MinimumMatchScore,
+            search.MinimumNewMatchScore,
+            search.OnlyNewJobs,
             search.Source,
             search.IsActive,
             search.CreatedAtUtc);

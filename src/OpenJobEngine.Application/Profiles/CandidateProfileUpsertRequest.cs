@@ -17,6 +17,10 @@ public sealed record CandidateProfileUpsertRequest(
     string? CurrentCountryCode,
     IReadOnlyCollection<string> TargetCities,
     IReadOnlyCollection<string> TargetCountries,
+    IReadOnlyCollection<string> TargetTimezones,
     bool IsWillingToRelocate,
+    IReadOnlyCollection<string> ExcludedWorkModes,
+    IReadOnlyCollection<string> IncludedCompanyKeywords,
+    IReadOnlyCollection<string> ExcludedCompanyKeywords,
     IReadOnlyCollection<CandidateSkillInput> Skills,
     IReadOnlyCollection<CandidateLanguageInput> Languages);

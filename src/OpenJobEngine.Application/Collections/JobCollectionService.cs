@@ -158,9 +158,9 @@ public sealed class JobCollectionService(
                     }
                 }
 
-                await DeactivateMissingObservationsAsync(provider.SourceName, seenObservationKeys, cancellationToken);
+                var deactivatedJobs = await DeactivateMissingObservationsAsync(provider.SourceName, seenObservationKeys, cancellationToken);
 
-                execution.Complete(DateTimeOffset.UtcNow, rawJobs.Count, createdJobs, updatedJobs, deduplicatedJobs);
+                execution.Complete(DateTimeOffset.UtcNow, rawJobs.Count, createdJobs, updatedJobs, deduplicatedJobs, deactivatedJobs);
                 await scrapeExecutionRepository.UpdateAsync(execution, cancellationToken);
                 await MarkSourceCollectedAsync(provider.SourceName, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -195,12 +195,13 @@ public sealed class JobCollectionService(
         return new CollectionRunResultDto(startedAtUtc, DateTimeOffset.UtcNow, summaries);
     }
 
-    private async Task DeactivateMissingObservationsAsync(
+    private async Task<int> DeactivateMissingObservationsAsync(
         string sourceName,
         HashSet<string> seenObservationKeys,
         CancellationToken cancellationToken)
     {
         var activeObservations = await jobRepository.GetActiveObservationsBySourceAsync(sourceName, cancellationToken);
+        var deactivatedJobs = 0;
 
         foreach (var observation in activeObservations)
         {
@@ -222,6 +223,7 @@ public sealed class JobCollectionService(
             var remainsActive = observations.Any(x => x.Id != observation.Id && x.IsActive);
             job.SetActiveState(remainsActive);
             await jobRepository.UpdateAsync(job, cancellationToken);
+            deactivatedJobs++;
 
             var snapshot = BuildSnapshot(job);
             var snapshotJson = SerializeSnapshot(snapshot);
@@ -238,6 +240,8 @@ public sealed class JobCollectionService(
                     DateTimeOffset.UtcNow),
                 cancellationToken);
         }
+
+        return deactivatedJobs;
     }
 
     private static IReadOnlyCollection<JobOfferHistoryEntry> BuildHistoryEntries(

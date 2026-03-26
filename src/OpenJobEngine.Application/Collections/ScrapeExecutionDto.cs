@@ -12,6 +12,7 @@ public sealed record ScrapeExecutionDto(
     int CreatedJobs,
     int UpdatedJobs,
     int DeduplicatedJobs,
+    int DeactivatedJobs,
     string? ErrorMessage)
 {
     public static ScrapeExecutionDto FromDomain(ScrapeExecution execution)
@@ -26,6 +27,7 @@ public sealed record ScrapeExecutionDto(
             execution.CreatedJobs,
             execution.UpdatedJobs,
             execution.DeduplicatedJobs,
+            execution.DeactivatedJobs,
             execution.ErrorMessage);
     }
 }

@@ -8,8 +8,11 @@ public sealed record ProfileAlertDto(
     string ChannelType,
     string? Target,
     decimal? MinimumMatchScore,
+    decimal? MinimumNewMatchScore,
+    bool OnlyNewJobs,
     bool IsActive,
-    DateTimeOffset CreatedAtUtc)
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? LastCheckedAtUtc)
 {
     public static ProfileAlertDto FromDomain(ProfileAlert alert) =>
         new(
@@ -18,6 +21,9 @@ public sealed record ProfileAlertDto(
             alert.ChannelType.ToString(),
             alert.Target,
             alert.MinimumMatchScore,
+            alert.MinimumNewMatchScore,
+            alert.OnlyNewJobs,
             alert.IsActive,
-            alert.CreatedAtUtc);
+            alert.CreatedAtUtc,
+            alert.LastCheckedAtUtc);
 }

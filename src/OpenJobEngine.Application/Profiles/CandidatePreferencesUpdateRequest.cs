@@ -13,4 +13,8 @@ public sealed record CandidatePreferencesUpdateRequest(
     string? CurrentCountryCode,
     IReadOnlyCollection<string> TargetCities,
     IReadOnlyCollection<string> TargetCountries,
+    IReadOnlyCollection<string> TargetTimezones,
+    IReadOnlyCollection<string> ExcludedWorkModes,
+    IReadOnlyCollection<string> IncludedCompanyKeywords,
+    IReadOnlyCollection<string> ExcludedCompanyKeywords,
     bool IsWillingToRelocate);

@@ -5,4 +5,6 @@ public sealed record ProfileAlertCreateRequest(
     string ChannelType,
     string? Target,
     decimal? MinimumMatchScore,
+    decimal? MinimumNewMatchScore,
+    bool OnlyNewJobs,
     bool IsActive);
