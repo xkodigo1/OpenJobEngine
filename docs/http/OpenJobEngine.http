@@ -1,0 +1,100 @@
+@baseUrl = http://localhost:5000
+@profileId = 00000000-0000-0000-0000-000000000000
+@jobId = 00000000-0000-0000-0000-000000000000
+@sourceName = greenhouse
+
+### Swagger health
+GET {{baseUrl}}/swagger/v1/swagger.json
+
+### Run collection for one source
+POST {{baseUrl}}/api/collections/run/{{sourceName}}
+
+### Run all enabled providers
+POST {{baseUrl}}/api/collections/run
+
+### List recent collection executions
+GET {{baseUrl}}/api/collections/executions
+
+### Search jobs
+GET {{baseUrl}}/api/jobs?query=backend&location=bogota&page=1&pageSize=10
+
+### Create candidate profile
+POST {{baseUrl}}/api/profiles
+Content-Type: application/json
+
+{
+  "targetTitle": "Backend Developer",
+  "professionalSummary": "Backend engineer focused on .NET and cloud workloads.",
+  "yearsOfExperience": 5,
+  "seniorityLevel": "Senior",
+  "preferredWorkMode": "Remote",
+  "acceptRemote": true,
+  "acceptHybrid": true,
+  "acceptOnSite": false,
+  "salaryMin": 8000,
+  "salaryMax": 12000,
+  "salaryCurrency": "USD",
+  "currentCity": "Bogota",
+  "currentRegion": "Cundinamarca",
+  "currentCountryCode": "CO",
+  "targetCities": ["Bogota", "Medellin"],
+  "targetCountries": ["CO", "MX"],
+  "isWillingToRelocate": false,
+  "skills": [
+    { "skillName": "C#", "skillSlug": "csharp", "category": "Language", "yearsExperience": 5, "proficiencyScore": 5 },
+    { "skillName": "ASP.NET Core", "skillSlug": "aspnet-core", "category": "Framework", "yearsExperience": 4, "proficiencyScore": 5 },
+    { "skillName": "PostgreSQL", "skillSlug": "postgresql", "category": "Database", "yearsExperience": 4, "proficiencyScore": 4 }
+  ],
+  "languages": [
+    { "languageCode": "es", "languageName": "Spanish", "proficiency": "Native" },
+    { "languageCode": "en", "languageName": "English", "proficiency": "B2" }
+  ]
+}
+
+### Get profile
+GET {{baseUrl}}/api/profiles/{{profileId}}
+
+### Import resume preview only
+POST {{baseUrl}}/api/profiles/{{profileId}}/resume?applyToProfile=false
+Content-Type: multipart/form-data; boundary=OpenJobEngineBoundary
+
+--OpenJobEngineBoundary
+Content-Disposition: form-data; name="file"; filename="resume.pdf"
+Content-Type: application/pdf
+
+< ./resume.pdf
+--OpenJobEngineBoundary--
+
+### Get active matching rules
+GET {{baseUrl}}/api/matching/rules
+
+### Search matches
+POST {{baseUrl}}/api/matching/search
+Content-Type: application/json
+
+{
+  "profileId": "{{profileId}}",
+  "query": "backend",
+  "location": "bogota",
+  "remoteOnly": false,
+  "salaryMin": 7000,
+  "source": null,
+  "page": 1,
+  "pageSize": 10,
+  "minimumMatchScore": 40
+}
+
+### Get matches for profile
+GET {{baseUrl}}/api/profiles/{{profileId}}/matches?page=1&pageSize=10
+
+### Get match detail for one job
+GET {{baseUrl}}/api/jobs/{{jobId}}/match?profileId={{profileId}}
+
+### Get job history
+GET {{baseUrl}}/api/jobs/{{jobId}}/history
+
+### Provider metrics
+GET {{baseUrl}}/api/metrics/providers
+
+### System overview
+GET {{baseUrl}}/api/metrics/overview
