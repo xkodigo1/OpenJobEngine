@@ -80,6 +80,25 @@ git flow feature finish nombre-de-feature
 
 Repo-specific guidance: `docs/gitflow.md`
 
+## Versioning and releases
+
+OpenJobEngine now uses centralized semantic versioning from `Directory.Build.props`.
+
+Current baseline:
+
+- version: `0.1.0-demo.1`
+- stage: `demo`
+- tag format: `v<version>`
+
+Release progression:
+
+- demo: `0.1.0-demo.1`
+- beta: `0.1.0-beta.1`
+- stable: `0.1.0`
+
+Detailed strategy: `docs/versioning.md`
+Release notes history: `CHANGELOG.md`
+
 Tambien puedes correr directamente:
 
 ```bash

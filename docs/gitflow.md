@@ -72,24 +72,14 @@ dotnet build OpenJobEngine.sln -c Release
 
 Start:
 
-```powershell
-git flow release start v1.2.0
-```
-
 ```bash
-git flow release start v1.2.0
+git flow release start 0.1.0-demo.1
 ```
 
 Finish:
 
-```powershell
-git flow release finish v1.2.0
-git push origin develop
-git push origin main --tags
-```
-
 ```bash
-git flow release finish v1.2.0
+git flow release finish 0.1.0-demo.1
 git push origin develop
 git push origin main --tags
 ```
@@ -100,27 +90,22 @@ Release branches are only for minor fixes, docs and versioning work. Do not add 
 
 Start:
 
-```powershell
-git flow hotfix start v1.2.1
-```
-
 ```bash
-git flow hotfix start v1.2.1
+git flow hotfix start 0.1.1
 ```
 
 Finish:
 
-```powershell
-git flow hotfix finish v1.2.1
+```bash
+git flow hotfix finish 0.1.1
 git push origin develop
 git push origin main --tags
 ```
 
-```bash
-git flow hotfix finish v1.2.1
-git push origin develop
-git push origin main --tags
-```
+Important:
+
+- because the repository uses tag prefix `v`, the release or hotfix name should not include the leading `v`
+- `git flow release start 0.1.0-demo.1` produces tag `v0.1.0-demo.1`
 
 Hotfix branches are for urgent production issues only.
 
