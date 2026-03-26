@@ -1,0 +1,45 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Domain", "src\OpenJobEngine.Domain\OpenJobEngine.Domain.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F101}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Application", "src\OpenJobEngine.Application\OpenJobEngine.Application.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F102}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Infrastructure", "src\OpenJobEngine.Infrastructure\OpenJobEngine.Infrastructure.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F103}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Api", "src\OpenJobEngine.Api\OpenJobEngine.Api.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Worker", "src\OpenJobEngine.Worker\OpenJobEngine.Worker.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F101}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F101}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F101}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F102}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F102}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F102}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F102}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F103}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F103}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F103}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F103}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
