@@ -38,9 +38,9 @@ Before tagging a release:
 4. verify any public API change is called out in the notes
 5. avoid silent contract changes
 
-## Practical scope for v0.4.0
+## Practical scope after v0.4.0
 
-For the current hardening cycle, the goal is to begin discipline, not to add a heavy contract-diff toolchain.
+`v0.4.0` establishes the first explicit compatibility discipline, but it still avoids a heavy contract-diff toolchain.
 
 The repo should be consistent enough that future releases can tighten this further with:
 

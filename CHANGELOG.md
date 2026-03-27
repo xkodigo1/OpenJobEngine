@@ -6,11 +6,24 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 ## [Unreleased]
 
-- Added exportable release notes tooling for tag and GitHub Release bodies.
-- Added API compatibility guidance for the public `/api` surface.
-- Improved resume parsing quality for Spanish and English CVs with more conservative onboarding previews.
-- Improved LATAM salary normalization, provider freshness handling and provider quality metrics.
-- Added integration tests for API compatibility, resume parsing and stale-provider deactivation behavior.
+## [0.4.0] - 2026-03-27
+
+### Added
+
+- Exportable release notes tooling for tag and GitHub Release bodies plus a lightweight API compatibility discipline for the public `/api` surface.
+- Provider lifecycle policies with per-provider stale windows and integration coverage for stale-job deactivation.
+- Integration tests covering API compatibility surface, release governance, resume parsing and provider freshness behavior.
+
+### Changed
+
+- Resume parsing now segments Spanish and English CV sections more conservatively, returns stronger onboarding confidences and avoids inventing work mode or target preferences.
+- Salary normalization now handles common LATAM formats such as `k`, `mil`, `millones` and local currency inference from structured location signals.
+- Provider quality metrics now expose trusted salary coverage, low-quality ratios and average freshness hours.
+
+### Fixed
+
+- Automatic deactivation of stale source observations when a provider has been failing or a listing stops being seen within the configured freshness window.
+- Release governance tests now validate the published export workflow without depending on shell-specific path separators.
 
 ## [0.3.0-beta.3] - 2026-03-27
 
