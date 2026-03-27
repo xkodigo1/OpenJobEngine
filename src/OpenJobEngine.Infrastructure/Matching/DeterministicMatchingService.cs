@@ -26,7 +26,7 @@ public sealed class DeterministicMatchingService(
     public async Task<MatchingSearchResultDto> SearchAsync(MatchingSearchRequest request, CancellationToken cancellationToken)
     {
         var profile = await candidateProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
-            ?? throw new InvalidOperationException($"Profile '{request.ProfileId}' was not found.");
+            ?? throw new ResourceNotFoundException($"Profile '{request.ProfileId}' was not found.");
 
         var jobs = await jobRepository.ListActiveAsync(cancellationToken);
         var filteredJobs = ApplyFilters(jobs, request);

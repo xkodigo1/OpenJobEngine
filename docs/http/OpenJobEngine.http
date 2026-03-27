@@ -3,6 +3,9 @@
 @jobId = 00000000-0000-0000-0000-000000000000
 @sourceName = greenhouse
 
+### Expected response headers
+# X-OpenJobEngine-Version: current release version
+
 ### Swagger health
 GET {{baseUrl}}/swagger/v1/swagger.json
 

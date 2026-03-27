@@ -86,18 +86,19 @@ OpenJobEngine now uses centralized semantic versioning from `Directory.Build.pro
 
 Current baseline:
 
-- version: `0.1.0-demo.1`
+- version: `0.1.1-demo.2`
 - stage: `demo`
 - tag format: `v<version>`
 
 Release progression:
 
-- demo: `0.1.0-demo.1`
-- beta: `0.1.0-beta.1`
-- stable: `0.1.0`
+- demo: `0.1.1-demo.2`
+- beta: `0.2.0-beta.1`
+- stable: `1.0.0`
 
 Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
+Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
 
@@ -199,6 +200,8 @@ Flujo recomendado:
 4. subir CV
 5. pedir matches
 6. revisar historico y metricas
+
+Las respuestas de error comunes ahora se exponen como `application/problem+json`.
 
 ## Estado actual
 

@@ -45,22 +45,22 @@ public sealed class CandidateProfileConfiguration : IEntityTypeConfiguration<Can
         builder.Navigation(x => x.SalaryExpectation).IsRequired();
         builder.Navigation(x => x.LocationPreference).IsRequired();
 
-        builder.HasMany<CandidateSkill>("skills")
+        builder.HasMany(x => x.Skills)
             .WithOne()
             .HasForeignKey(x => x.CandidateProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<CandidateLanguage>("languages")
+        builder.HasMany(x => x.Languages)
             .WithOne()
             .HasForeignKey(x => x.CandidateProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<SavedSearch>("savedSearches")
+        builder.HasMany(x => x.SavedSearches)
             .WithOne()
             .HasForeignKey(x => x.CandidateProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<ProfileAlert>("alerts")
+        builder.HasMany(x => x.Alerts)
             .WithOne()
             .HasForeignKey(x => x.CandidateProfileId)
             .OnDelete(DeleteBehavior.Cascade);

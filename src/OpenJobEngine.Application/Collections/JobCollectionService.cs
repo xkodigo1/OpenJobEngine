@@ -6,6 +6,7 @@ using OpenJobEngine.Application.Abstractions.Collections;
 using OpenJobEngine.Application.Abstractions.Persistence;
 using OpenJobEngine.Application.Abstractions.Providers;
 using OpenJobEngine.Application.Abstractions.Services;
+using OpenJobEngine.Application.Common;
 using OpenJobEngine.Domain.Entities;
 using OpenJobEngine.Domain.Enums;
 
@@ -34,7 +35,7 @@ public sealed class JobCollectionService(
 
         if (provider is null)
         {
-            throw new InvalidOperationException($"No provider registered for source '{sourceName}'.");
+            throw new ResourceNotFoundException($"No provider registered for source '{sourceName}'.");
         }
 
         return await RunInternalAsync([provider], cancellationToken);

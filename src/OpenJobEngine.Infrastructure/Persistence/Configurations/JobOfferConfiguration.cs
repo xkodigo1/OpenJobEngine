@@ -30,22 +30,22 @@ public sealed class JobOfferConfiguration : IEntityTypeConfiguration<JobOffer>
         builder.Property(x => x.SeniorityLevel).HasConversion<string>().HasMaxLength(50);
         builder.Property(x => x.LastSeenAtUtc).IsRequired();
 
-        builder.HasMany<JobOfferSkillTag>("skillTags")
+        builder.HasMany(x => x.SkillTags)
             .WithOne()
             .HasForeignKey(x => x.JobOfferId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<JobOfferLanguageRequirement>("languageRequirements")
+        builder.HasMany(x => x.LanguageRequirements)
             .WithOne()
             .HasForeignKey(x => x.JobOfferId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<JobOfferSourceObservation>("sourceObservations")
+        builder.HasMany(x => x.SourceObservations)
             .WithOne()
             .HasForeignKey(x => x.JobOfferId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany<JobOfferHistoryEntry>("historyEntries")
+        builder.HasMany(x => x.HistoryEntries)
             .WithOne()
             .HasForeignKey(x => x.JobOfferId)
             .OnDelete(DeleteBehavior.Cascade);
