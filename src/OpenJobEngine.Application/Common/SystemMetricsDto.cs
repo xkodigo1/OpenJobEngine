@@ -14,9 +14,12 @@ public sealed record ProviderQualityMetricsDto(
     int TotalActiveJobs,
     decimal AverageQualityScore,
     decimal JobsWithSalaryRatio,
+    decimal JobsWithTrustedSalaryRatio,
     decimal JobsWithStructuredLocationRatio,
     decimal JobsWithSkillSignalsRatio,
-    decimal JobsWithLanguageSignalsRatio);
+    decimal JobsWithLanguageSignalsRatio,
+    decimal LowQualityJobsRatio,
+    decimal? AverageFreshnessHours);
 
 public sealed record ProviderOperationsMetricsDto(
     IReadOnlyCollection<ProviderOperationMetricsDto> Sources);

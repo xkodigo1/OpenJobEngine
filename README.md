@@ -11,6 +11,7 @@ No es solo un agregador. El proyecto ya incluye:
 - parsing heuristico de CV en PDF
 - ranking configurable desde JSON
 - alertas, saved searches y metricas operativas
+- ventanas de staleness por provider para desactivar vacantes envejecidas
 
 ## Arquitectura
 
@@ -130,6 +131,8 @@ Persistence__Provider=Postgres
 ConnectionStrings__Postgres=Host=localhost;Port=5432;Database=openjobengine;Username=postgres;Password=postgres
 ```
 
+Cada provider tambien soporta `StaleAfterHours` para definir despues de cuantas horas sin verse una observacion puede desactivarse automaticamente.
+
 ## Endpoints principales
 
 Jobs:
@@ -168,6 +171,15 @@ Matching y operacion:
 - `GET /api/metrics/matching`
 - `GET /api/metrics/alerts`
 - `POST /api/webhooks/test`
+
+Metricas de provider incluyen:
+- score promedio
+- ratio con salario
+- ratio con salario confiable
+- ratio con ubicacion estructurada
+- ratio con skills e idiomas
+- ratio de jobs de baja calidad
+- freshness promedio en horas
 
 Swagger:
 - `/swagger`

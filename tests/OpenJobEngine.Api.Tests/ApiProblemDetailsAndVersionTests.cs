@@ -34,6 +34,25 @@ public sealed class ApiProblemDetailsAndVersionTests : IClassFixture<ApiWebAppli
     }
 
     [Fact]
+    public async Task Swagger_ExposesCoreApiCompatibilitySurface()
+    {
+        var response = await client.GetAsync("/swagger/v1/swagger.json");
+        response.EnsureSuccessStatusCode();
+
+        using var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var paths = payload.RootElement.GetProperty("paths");
+
+        Assert.True(paths.TryGetProperty("/api/jobs", out _));
+        Assert.True(paths.TryGetProperty("/api/jobs/{id}", out _));
+        Assert.True(paths.TryGetProperty("/api/jobs/{id}/match", out _));
+        Assert.True(paths.TryGetProperty("/api/profiles", out _));
+        Assert.True(paths.TryGetProperty("/api/profiles/{profileId}", out _));
+        Assert.True(paths.TryGetProperty("/api/profiles/{profileId}/resume", out _));
+        Assert.True(paths.TryGetProperty("/api/matching/search", out _));
+        Assert.True(paths.TryGetProperty("/api/metrics/overview", out _));
+    }
+
+    [Fact]
     public async Task UnknownCollectionSource_ReturnsProblemDetails()
     {
         var response = await client.PostAsync("/api/collections/run/unknown-source", content: null);

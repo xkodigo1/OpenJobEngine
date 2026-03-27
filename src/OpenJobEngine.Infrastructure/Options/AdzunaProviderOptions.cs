@@ -21,4 +21,6 @@ public sealed class AdzunaProviderOptions
     public string AppId { get; init; } = string.Empty;
 
     public string AppKey { get; init; } = string.Empty;
+
+    public int StaleAfterHours { get; init; } = 72;
 }

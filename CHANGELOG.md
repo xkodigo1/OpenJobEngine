@@ -8,6 +8,9 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 - Added exportable release notes tooling for tag and GitHub Release bodies.
 - Added API compatibility guidance for the public `/api` surface.
+- Improved resume parsing quality for Spanish and English CVs with more conservative onboarding previews.
+- Improved LATAM salary normalization, provider freshness handling and provider quality metrics.
+- Added integration tests for API compatibility, resume parsing and stale-provider deactivation behavior.
 
 ## [0.3.0-beta.3] - 2026-03-27
 

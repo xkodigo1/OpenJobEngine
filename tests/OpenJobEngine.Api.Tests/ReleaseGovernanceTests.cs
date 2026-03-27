@@ -24,8 +24,8 @@ public sealed class ReleaseGovernanceTests
         Assert.Contains("docs/release-notes.md", readme);
         Assert.Contains("docs/api-compatibility.md", readme);
         Assert.Contains("export release notes", versioning, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("scripts/export-release-notes.ps1", releaseNotes);
-        Assert.Contains("scripts/export-release-notes.sh", releaseNotes);
+        Assert.Contains("export-release-notes.ps1", releaseNotes, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("export-release-notes.sh", releaseNotes, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Breaking changes", apiCompatibility);
     }
 

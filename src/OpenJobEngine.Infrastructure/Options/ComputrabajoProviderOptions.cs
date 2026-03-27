@@ -17,4 +17,6 @@ public sealed class ComputrabajoProviderOptions
     public bool UsePlaywright { get; init; }
 
     public string UserAgent { get; init; } = "OpenJobEngine/1.0 (+https://github.com)";
+
+    public int StaleAfterHours { get; init; } = 72;
 }

@@ -15,4 +15,6 @@ public sealed class LeverProviderOptions
     public int PageSize { get; init; } = 100;
 
     public int MaxPages { get; init; } = 10;
+
+    public int StaleAfterHours { get; init; } = 168;
 }
