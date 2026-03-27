@@ -11,6 +11,7 @@ No es solo un agregador. El proyecto ya incluye:
 - parsing heuristico de CV en PDF
 - ranking configurable desde JSON
 - alertas, saved searches y metricas operativas
+- ventanas de staleness por provider para desactivar vacantes envejecidas
 
 ## Arquitectura
 
@@ -86,18 +87,20 @@ OpenJobEngine now uses centralized semantic versioning from `Directory.Build.pro
 
 Current baseline:
 
-- version: `0.3.0-beta.3`
-- stage: `beta`
+- version: `0.4.0`
+- stage: `stable`
 - tag format: `v<version>`
 
 Release progression:
 
 - demo: `0.1.0-demo.1`, `0.1.1-demo.2`
 - beta: `0.2.0-beta.1`, `0.2.1-beta.2`, `0.3.0-beta.3`
-- stable: `1.0.0`
+- stable: `0.4.0`, `1.0.0`
 
 Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
+Exportable release notes: `docs/release-notes.md`
+API compatibility policy: `docs/api-compatibility.md`
 Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
@@ -127,6 +130,8 @@ Produccion con PostgreSQL:
 Persistence__Provider=Postgres
 ConnectionStrings__Postgres=Host=localhost;Port=5432;Database=openjobengine;Username=postgres;Password=postgres
 ```
+
+Cada provider tambien soporta `StaleAfterHours` para definir despues de cuantas horas sin verse una observacion puede desactivarse automaticamente.
 
 ## Endpoints principales
 
@@ -166,6 +171,15 @@ Matching y operacion:
 - `GET /api/metrics/matching`
 - `GET /api/metrics/alerts`
 - `POST /api/webhooks/test`
+
+Metricas de provider incluyen:
+- score promedio
+- ratio con salario
+- ratio con salario confiable
+- ratio con ubicacion estructurada
+- ratio con skills e idiomas
+- ratio de jobs de baja calidad
+- freshness promedio en horas
 
 Swagger:
 - `/swagger`
@@ -208,6 +222,7 @@ Flujo recomendado:
 6. revisar historico y metricas
 
 Las respuestas de error comunes ahora se exponen como `application/problem+json`.
+Release notes for tags and GitHub Releases should be exported from `CHANGELOG.md` with `scripts/export-release-notes.ps1` or `scripts/export-release-notes.sh`.
 
 ## Estado actual
 

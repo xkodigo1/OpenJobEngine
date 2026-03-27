@@ -35,6 +35,16 @@ public static class OpenJobEngineServiceCollectionExtensions
         services.Configure<GreenhouseProviderOptions>(configuration.GetSection("Providers:Greenhouse"));
         services.Configure<LeverProviderOptions>(configuration.GetSection("Providers:Lever"));
 
+        var computrabajoOptions = configuration.GetSection("Providers:Computrabajo").Get<ComputrabajoProviderOptions>() ?? new();
+        var adzunaOptions = configuration.GetSection("Providers:Adzuna").Get<AdzunaProviderOptions>() ?? new();
+        var greenhouseOptions = configuration.GetSection("Providers:Greenhouse").Get<GreenhouseProviderOptions>() ?? new();
+        var leverOptions = configuration.GetSection("Providers:Lever").Get<LeverProviderOptions>() ?? new();
+
+        services.AddSingleton(computrabajoOptions);
+        services.AddSingleton(adzunaOptions);
+        services.AddSingleton(greenhouseOptions);
+        services.AddSingleton(leverOptions);
+
         services.AddDbContext<OpenJobEngineDbContext>(options =>
         {
             var provider = persistenceOptions.Provider?.Trim() ?? "Sqlite";
@@ -78,27 +88,27 @@ public static class OpenJobEngineServiceCollectionExtensions
         services.AddHttpClient();
         services.AddSingleton<ITechnologyTaxonomyProvider, JsonTechnologyTaxonomyProvider>();
         services.AddSingleton<IMatchingRulesProvider, JsonMatchingRulesProvider>();
+        services.AddSingleton<IProviderLifecyclePolicyProvider, ConfiguredProviderLifecyclePolicyProvider>();
 
         services.AddSingleton<ComputrabajoHtmlParser>();
         services.AddSingleton<IPageContentFetcher, PlaywrightPageContentFetcher>();
         services.AddHostedService<OpenJobEngineDatabaseMigrator>();
         services.AddHostedService<OpenJobEngineDatabaseInitializer>();
 
-        RegisterProviders(services, configuration);
+        RegisterProviders(services, computrabajoOptions, adzunaOptions, greenhouseOptions, leverOptions);
 
         return services;
     }
 
-    private static void RegisterProviders(IServiceCollection services, IConfiguration configuration)
+    private static void RegisterProviders(
+        IServiceCollection services,
+        ComputrabajoProviderOptions computrabajoOptions,
+        AdzunaProviderOptions adzunaOptions,
+        GreenhouseProviderOptions greenhouseOptions,
+        LeverProviderOptions leverOptions)
     {
-        var computrabajoOptions = configuration.GetSection("Providers:Computrabajo").Get<ComputrabajoProviderOptions>() ?? new();
-        var adzunaOptions = configuration.GetSection("Providers:Adzuna").Get<AdzunaProviderOptions>() ?? new();
-        var greenhouseOptions = configuration.GetSection("Providers:Greenhouse").Get<GreenhouseProviderOptions>() ?? new();
-        var leverOptions = configuration.GetSection("Providers:Lever").Get<LeverProviderOptions>() ?? new();
-
         if (computrabajoOptions.Enabled)
         {
-            services.AddSingleton(computrabajoOptions);
             services.AddHttpClient<ComputrabajoProvider>(client =>
             {
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(computrabajoOptions.UserAgent);
@@ -109,7 +119,6 @@ public static class OpenJobEngineServiceCollectionExtensions
 
         if (adzunaOptions.Enabled)
         {
-            services.AddSingleton(adzunaOptions);
             services.AddHttpClient<AdzunaJobProvider>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
@@ -119,7 +128,6 @@ public static class OpenJobEngineServiceCollectionExtensions
 
         if (greenhouseOptions.Enabled)
         {
-            services.AddSingleton(greenhouseOptions);
             services.AddHttpClient<GreenhouseJobProvider>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
@@ -129,7 +137,6 @@ public static class OpenJobEngineServiceCollectionExtensions
 
         if (leverOptions.Enabled)
         {
-            services.AddSingleton(leverOptions);
             services.AddHttpClient<LeverJobProvider>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);

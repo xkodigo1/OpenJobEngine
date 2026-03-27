@@ -2,7 +2,7 @@
 
 This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
 
-It is based on the current system state after `v0.3.0-beta.3`.
+It is based on the current system state after `v0.4.0`.
 
 ## Current system
 
@@ -18,23 +18,24 @@ OpenJobEngine already includes a functional backend-first baseline with these ca
 - Candidate skills, languages, salary and location preferences
 - Saved searches and profile alerts as persisted entities
 - Real alert dispatch pipeline with persisted alert deliveries and webhook publishing
-- Resume import from PDF with heuristic extraction, warnings and field confidences
+- Resume import from PDF with stronger heuristic extraction, warnings and field confidences for Spanish and English CVs
 - Deterministic explainable matching with JSON-configured rules, hard requirements and preference-aware scoring
 - Metrics endpoints for overview, provider quality, provider operations, matching and alerts
 - Separate worker process for scheduled collection
 - Git Flow release process and centralized semantic versioning
+- Exportable release notes workflow and a lightweight API compatibility policy
 
 ## Current limitations
 
 The project is already useful for demos and internal validation, but it is not yet production-grade. Current gaps:
 
-- Alert delivery is now functional, but compatibility guarantees and operational hardening still need to mature
-- Resume parsing is heuristic only
+- Alert delivery is functional, but downstream automation and long-running operational hardening still need to mature
+- Resume parsing is materially better, but still heuristic only
 - Matching is explainable and richer than the demo baseline, but still limited in alerting and downstream automation
 - Providers are disabled by default and require manual configuration
 - Provider coverage is still small
 - No multi-tenant model
-- No hard compatibility policy for the API yet
+- API compatibility discipline has started, but there is not yet a full contract-diff workflow
 
 ## Product direction
 
@@ -171,6 +172,10 @@ Delivered:
 
 #### `v0.4.0`
 
+Status:
+
+- released
+
 Goal:
 
 - turn OpenJobEngine into a candidate matching backend ready for broader beta adoption
@@ -183,11 +188,21 @@ Scope:
 - add exportable release notes and stronger release governance
 - begin API compatibility discipline
 
+Delivered:
+
+- stronger Spanish and English CV parsing with section-aware extraction, richer confidences and safer onboarding previews
+- LATAM salary normalization for `k`, `mil`, `millones` and local currency inference from structured locations
+- provider freshness windows with stale observation deactivation even when a provider run fails
+- richer provider quality metrics with trusted salary ratios, low-quality ratios and average freshness hours
+- release notes export workflow, compatibility guidance and API compatibility tests
+
 Release criteria:
 
 - onboarding quality is materially better
 - matching and enrichment are more trustworthy across common LATAM scenarios
 - release process is repeatable and auditable
+
+### Next release target
 
 #### `v1.0.0`
 
@@ -232,10 +247,10 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.3.0-beta.3` should be:
+The next release target after `v0.4.0` should be:
 
-- `v0.4.0`
+- `v1.0.0`
 
 Reason:
 
-- alerting and integrator workflows are now in place, so the next blocker is improving onboarding quality, normalization trust and release governance.
+- the backend already covers aggregation, matching, alerting and release governance, so the next step is to stabilize contracts, deployment guidance and production expectations for the first stable major.

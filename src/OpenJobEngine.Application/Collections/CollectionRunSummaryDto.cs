@@ -6,5 +6,7 @@ public sealed record CollectionRunSummaryDto(
     int CreatedJobs,
     int UpdatedJobs,
     int DeduplicatedJobs,
+    int DeactivatedJobs,
+    int StaleDeactivatedJobs,
     bool Success,
     string? ErrorMessage);

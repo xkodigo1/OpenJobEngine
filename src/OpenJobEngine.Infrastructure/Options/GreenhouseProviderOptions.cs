@@ -11,4 +11,6 @@ public sealed class GreenhouseProviderOptions
     public string BoardToken { get; init; } = string.Empty;
 
     public bool IncludeContent { get; init; } = true;
+
+    public int StaleAfterHours { get; init; } = 168;
 }

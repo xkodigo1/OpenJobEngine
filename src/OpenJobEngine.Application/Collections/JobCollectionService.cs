@@ -14,6 +14,7 @@ namespace OpenJobEngine.Application.Collections;
 
 public sealed class JobCollectionService(
     IEnumerable<IJobProvider> providers,
+    IProviderLifecyclePolicyProvider providerLifecyclePolicyProvider,
     INormalizationService normalizationService,
     IJobEnrichmentService jobEnrichmentService,
     IDeduplicationService deduplicationService,
@@ -56,6 +57,7 @@ public sealed class JobCollectionService(
 
         foreach (var provider in selectedProviders)
         {
+            var lifecyclePolicy = providerLifecyclePolicyProvider.GetPolicy(provider.SourceName);
             var execution = ScrapeExecution.Start(provider.SourceName, DateTimeOffset.UtcNow);
             await scrapeExecutionRepository.AddAsync(execution, cancellationToken);
             await EnsureSourceRegisteredAsync(provider.SourceName, cancellationToken);
@@ -159,9 +161,19 @@ public sealed class JobCollectionService(
                     }
                 }
 
-                var deactivatedJobs = await DeactivateMissingObservationsAsync(provider.SourceName, seenObservationKeys, cancellationToken);
+                var deactivationResult = await DeactivateMissingObservationsAsync(
+                    provider.SourceName,
+                    seenObservationKeys,
+                    DateTimeOffset.UtcNow - lifecyclePolicy.StaleAfter,
+                    cancellationToken);
 
-                execution.Complete(DateTimeOffset.UtcNow, rawJobs.Count, createdJobs, updatedJobs, deduplicatedJobs, deactivatedJobs);
+                execution.Complete(
+                    DateTimeOffset.UtcNow,
+                    rawJobs.Count,
+                    createdJobs,
+                    updatedJobs,
+                    deduplicatedJobs,
+                    deactivationResult.DeactivatedJobs);
                 await scrapeExecutionRepository.UpdateAsync(execution, cancellationToken);
                 await MarkSourceCollectedAsync(provider.SourceName, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -172,12 +184,18 @@ public sealed class JobCollectionService(
                     createdJobs,
                     updatedJobs,
                     deduplicatedJobs,
+                    deactivationResult.DeactivatedJobs,
+                    deactivationResult.StaleDeactivatedJobs,
                     true,
                     null));
             }
             catch (Exception exception)
             {
                 logger.LogError(exception, "Collection failed for source {SourceName}", provider.SourceName);
+                var staleDeactivatedJobs = await DeactivateStaleObservationsAsync(
+                    provider.SourceName,
+                    DateTimeOffset.UtcNow - lifecyclePolicy.StaleAfter,
+                    cancellationToken);
                 execution.Fail(DateTimeOffset.UtcNow, exception.Message);
                 await scrapeExecutionRepository.UpdateAsync(execution, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -188,6 +206,8 @@ public sealed class JobCollectionService(
                     0,
                     0,
                     0,
+                    staleDeactivatedJobs,
+                    staleDeactivatedJobs,
                     false,
                     exception.Message));
             }
@@ -196,53 +216,103 @@ public sealed class JobCollectionService(
         return new CollectionRunResultDto(startedAtUtc, DateTimeOffset.UtcNow, summaries);
     }
 
-    private async Task<int> DeactivateMissingObservationsAsync(
+    private async Task<ObservationDeactivationResult> DeactivateMissingObservationsAsync(
         string sourceName,
         HashSet<string> seenObservationKeys,
+        DateTimeOffset staleCutoffUtc,
         CancellationToken cancellationToken)
     {
         var activeObservations = await jobRepository.GetActiveObservationsBySourceAsync(sourceName, cancellationToken);
         var deactivatedJobs = 0;
+        var staleDeactivatedJobs = 0;
 
         foreach (var observation in activeObservations)
         {
-            if (seenObservationKeys.Contains(BuildObservationKey(observation.SourceName, observation.SourceJobId)))
+            var observationKey = BuildObservationKey(observation.SourceName, observation.SourceJobId);
+            var isMissing = !seenObservationKeys.Contains(observationKey);
+            var isStale = observation.LastSeenAtUtc <= staleCutoffUtc;
+
+            if (!isMissing && !isStale)
             {
                 continue;
             }
 
-            observation.MarkInactive();
-            await jobRepository.UpdateObservationAsync(observation, cancellationToken);
-
-            var job = await jobRepository.GetByIdAsync(observation.JobOfferId, cancellationToken);
-            if (job is null)
+            if (await DeactivateObservationAsync(observation, sourceName, cancellationToken))
             {
-                continue;
+                deactivatedJobs++;
             }
 
-            var observations = await jobRepository.GetObservationsByJobIdAsync(job.Id, cancellationToken);
-            var remainsActive = observations.Any(x => x.Id != observation.Id && x.IsActive);
-            job.SetActiveState(remainsActive);
-            await jobRepository.UpdateAsync(job, cancellationToken);
-            deactivatedJobs++;
+            if (isStale)
+            {
+                staleDeactivatedJobs++;
+            }
+        }
 
-            var snapshot = BuildSnapshot(job);
-            var snapshotJson = SerializeSnapshot(snapshot);
-            var snapshotHash = ComputeSnapshotHash(snapshotJson);
+        return new ObservationDeactivationResult(deactivatedJobs, staleDeactivatedJobs);
+    }
 
-            await jobRepository.AddHistoryEntryAsync(
-                new JobOfferHistoryEntry(
-                    Guid.NewGuid(),
-                    job.Id,
-                    JobOfferHistoryEventType.Deactivated,
-                    snapshotHash,
-                    snapshotJson,
-                    sourceName,
-                    DateTimeOffset.UtcNow),
-                cancellationToken);
+    private async Task<int> DeactivateStaleObservationsAsync(
+        string sourceName,
+        DateTimeOffset staleCutoffUtc,
+        CancellationToken cancellationToken)
+    {
+        var activeObservations = await jobRepository.GetActiveObservationsBySourceAsync(sourceName, cancellationToken);
+        var staleObservations = activeObservations
+            .Where(x => x.LastSeenAtUtc <= staleCutoffUtc)
+            .ToArray();
+
+        if (staleObservations.Length == 0)
+        {
+            return 0;
+        }
+
+        var deactivatedJobs = 0;
+        foreach (var observation in staleObservations)
+        {
+            if (await DeactivateObservationAsync(observation, sourceName, cancellationToken))
+            {
+                deactivatedJobs++;
+            }
         }
 
         return deactivatedJobs;
+    }
+
+    private async Task<bool> DeactivateObservationAsync(
+        JobOfferSourceObservation observation,
+        string sourceName,
+        CancellationToken cancellationToken)
+    {
+        observation.MarkInactive();
+        await jobRepository.UpdateObservationAsync(observation, cancellationToken);
+
+        var job = await jobRepository.GetByIdAsync(observation.JobOfferId, cancellationToken);
+        if (job is null)
+        {
+            return false;
+        }
+
+        var observations = await jobRepository.GetObservationsByJobIdAsync(job.Id, cancellationToken);
+        var remainsActive = observations.Any(x => x.Id != observation.Id && x.IsActive);
+        job.SetActiveState(remainsActive);
+        await jobRepository.UpdateAsync(job, cancellationToken);
+
+        var snapshot = BuildSnapshot(job);
+        var snapshotJson = SerializeSnapshot(snapshot);
+        var snapshotHash = ComputeSnapshotHash(snapshotJson);
+
+        await jobRepository.AddHistoryEntryAsync(
+            new JobOfferHistoryEntry(
+                Guid.NewGuid(),
+                job.Id,
+                JobOfferHistoryEventType.Deactivated,
+                snapshotHash,
+                snapshotJson,
+                sourceName,
+                DateTimeOffset.UtcNow),
+            cancellationToken);
+
+        return true;
     }
 
     private static IReadOnlyCollection<JobOfferHistoryEntry> BuildHistoryEntries(
@@ -457,4 +527,8 @@ public sealed class JobCollectionService(
         IReadOnlyCollection<string> SkillSignals,
         IReadOnlyCollection<string> LanguageSignals,
         bool IsActive);
+
+    private sealed record ObservationDeactivationResult(
+        int DeactivatedJobs,
+        int StaleDeactivatedJobs);
 }
