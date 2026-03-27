@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -11,6 +11,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Api", "src\OpenJobEngine.Api\OpenJobEngine.Api.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F104}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Worker", "src\OpenJobEngine.Worker\OpenJobEngine.Worker.csproj", "{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{418B4694-8953-40D1-9883-5D7ECAA40280}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Api.Tests", "tests\OpenJobEngine.Api.Tests\OpenJobEngine.Api.Tests.csproj", "{5E3E0ADD-96D1-4335-AD20-E070334F1469}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,8 +42,15 @@ Global
 		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F10E3F5-0F62-4E8C-9E3F-5931F7B8F105}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5E3E0ADD-96D1-4335-AD20-E070334F1469} = {418B4694-8953-40D1-9883-5D7ECAA40280}
 	EndGlobalSection
 EndGlobal
