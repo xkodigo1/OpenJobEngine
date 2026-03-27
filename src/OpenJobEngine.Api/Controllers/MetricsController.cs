@@ -30,4 +30,34 @@ public sealed class MetricsController(ISystemMetricsService systemMetricsService
     {
         return Ok(await systemMetricsService.GetProvidersAsync(cancellationToken));
     }
+
+    /// <summary>
+    /// Returns provider operational metrics derived from recent collection executions.
+    /// </summary>
+    [HttpGet("providers/operations")]
+    [ProducesResponseType(typeof(ProviderOperationsMetricsDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ProviderOperationsMetricsDto>> GetProviderOperations(CancellationToken cancellationToken)
+    {
+        return Ok(await systemMetricsService.GetProviderOperationsAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// Returns aggregated matching metrics for the latest execution window.
+    /// </summary>
+    [HttpGet("matching")]
+    [ProducesResponseType(typeof(MatchingMetricsDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MatchingMetricsDto>> GetMatching(CancellationToken cancellationToken)
+    {
+        return Ok(await systemMetricsService.GetMatchingAsync(cancellationToken));
+    }
+
+    /// <summary>
+    /// Returns alert and delivery metrics for operational dashboards.
+    /// </summary>
+    [HttpGet("alerts")]
+    [ProducesResponseType(typeof(AlertMetricsDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<AlertMetricsDto>> GetAlerts(CancellationToken cancellationToken)
+    {
+        return Ok(await systemMetricsService.GetAlertsAsync(cancellationToken));
+    }
 }

@@ -32,6 +32,8 @@ public sealed class OpenJobEngineDbContext(DbContextOptions<OpenJobEngineDbConte
 
     public DbSet<ProfileAlert> ProfileAlerts => Set<ProfileAlert>();
 
+    public DbSet<AlertDelivery> AlertDeliveries => Set<AlertDelivery>();
+
     public DbSet<MatchExecution> MatchExecutions => Set<MatchExecution>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -48,6 +50,7 @@ public sealed class OpenJobEngineDbContext(DbContextOptions<OpenJobEngineDbConte
         modelBuilder.ApplyConfiguration(new CandidateLanguageConfiguration());
         modelBuilder.ApplyConfiguration(new SavedSearchConfiguration());
         modelBuilder.ApplyConfiguration(new ProfileAlertConfiguration());
+        modelBuilder.ApplyConfiguration(new AlertDeliveryConfiguration());
         modelBuilder.ApplyConfiguration(new MatchExecutionConfiguration());
     }
 }

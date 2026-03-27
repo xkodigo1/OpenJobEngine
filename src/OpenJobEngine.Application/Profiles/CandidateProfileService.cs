@@ -7,6 +7,7 @@ namespace OpenJobEngine.Application.Profiles;
 
 public sealed class CandidateProfileService(
     ICandidateProfileRepository candidateProfileRepository,
+    IProfileAlertRepository profileAlertRepository,
     IUnitOfWork unitOfWork) : ICandidateProfileService
 {
     public async Task<CandidateProfileDto> CreateAsync(CandidateProfileUpsertRequest request, CancellationToken cancellationToken)
@@ -144,6 +145,7 @@ public sealed class CandidateProfileService(
             request.IsActive);
 
         profile.AddAlert(alert);
+        await profileAlertRepository.AddAsync(alert, cancellationToken);
         await candidateProfileRepository.UpdateAsync(profile, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return ProfileAlertDto.FromDomain(alert);

@@ -7,4 +7,6 @@ public sealed class ProviderCatalogOptions
     public AdzunaProviderOptions Adzuna { get; init; } = new();
 
     public GreenhouseProviderOptions Greenhouse { get; init; } = new();
+
+    public LeverProviderOptions Lever { get; init; } = new();
 }

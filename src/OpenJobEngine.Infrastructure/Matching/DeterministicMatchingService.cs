@@ -28,16 +28,16 @@ public sealed class DeterministicMatchingService(
         var profile = await candidateProfileRepository.GetByIdAsync(request.ProfileId, cancellationToken)
             ?? throw new ResourceNotFoundException($"Profile '{request.ProfileId}' was not found.");
 
-        var jobs = await jobRepository.ListActiveAsync(cancellationToken);
-        var filteredJobs = ApplyFilters(jobs, request);
         var rules = matchingRulesProvider.GetCurrent();
         var previousExecution = await matchExecutionRepository.GetLatestForProfileAsync(request.ProfileId, cancellationToken);
-        var matches = filteredJobs
-            .Select(job => Score(profile, job, rules, skillIndex))
-            .Where(result => !request.MinimumMatchScore.HasValue || result.MatchScore >= request.MinimumMatchScore.Value)
-            .OrderByDescending(result => result.MatchScore)
-            .ThenByDescending(result => result.Job.PublishedAtUtc ?? result.Job.CollectedAtUtc)
-            .ToArray();
+        var matches = await EvaluateMatchesAsync(
+            profile,
+            rules,
+            request.MinimumMatchScore,
+            null,
+            ApplyFilters,
+            request,
+            cancellationToken);
         var result = CreateSearchResult(request.ProfileId, rules.Version, matches, request.Page, request.PageSize);
 
         await PersistExecutionAsync(
@@ -81,13 +81,14 @@ public sealed class DeterministicMatchingService(
         var threshold = minimumMatchScore ?? rules.Tolerances.NewHighPriorityThreshold;
         var baselineUtc = previousExecution?.CreatedAtUtc;
 
-        var matches = (await jobRepository.ListActiveAsync(cancellationToken))
-            .Where(job => IsNewSinceBaseline(job, baselineUtc))
-            .Select(job => Score(profile, job, rules, skillIndex))
-            .Where(result => result.MatchScore >= threshold)
-            .OrderByDescending(result => result.MatchScore)
-            .ThenByDescending(result => result.Job.PublishedAtUtc ?? result.Job.CollectedAtUtc)
-            .ToArray();
+        var matches = await EvaluateMatchesAsync(
+            profile,
+            rules,
+            threshold,
+            baselineUtc,
+            null,
+            null,
+            cancellationToken);
 
         var result = CreateSearchResult(profileId, rules.Version, matches, page, pageSize);
 
@@ -102,6 +103,26 @@ public sealed class DeterministicMatchingService(
             cancellationToken);
 
         return result;
+    }
+
+    public async Task<IReadOnlyCollection<JobMatchResultDto>> GetAlertCandidatesAsync(
+        Guid profileId,
+        decimal? minimumMatchScore,
+        bool onlyNewJobs,
+        DateTimeOffset? baselineUtc,
+        CancellationToken cancellationToken)
+    {
+        var profile = await candidateProfileRepository.GetByIdAsync(profileId, cancellationToken)
+            ?? throw new ResourceNotFoundException($"Profile '{profileId}' was not found.");
+
+        return await EvaluateMatchesAsync(
+            profile,
+            matchingRulesProvider.GetCurrent(),
+            minimumMatchScore,
+            onlyNewJobs ? baselineUtc : null,
+            null,
+            null,
+            cancellationToken);
     }
 
     private static IReadOnlyCollection<JobOffer> ApplyFilters(IReadOnlyCollection<JobOffer> jobs, MatchingSearchRequest request)
@@ -139,6 +160,29 @@ public sealed class DeterministicMatchingService(
         }
 
         return query.ToArray();
+    }
+
+    private async Task<IReadOnlyCollection<JobMatchResultDto>> EvaluateMatchesAsync(
+        CandidateProfile profile,
+        MatchingRuleSetDto rules,
+        decimal? minimumMatchScore,
+        DateTimeOffset? baselineUtc,
+        Func<IReadOnlyCollection<JobOffer>, MatchingSearchRequest, IReadOnlyCollection<JobOffer>>? filterSelector,
+        MatchingSearchRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var jobs = await jobRepository.ListActiveAsync(cancellationToken);
+        var filteredJobs = filterSelector is not null && request is not null
+            ? filterSelector(jobs, request)
+            : jobs;
+
+        return filteredJobs
+            .Where(job => IsNewSinceBaseline(job, baselineUtc))
+            .Select(job => Score(profile, job, rules, skillIndex))
+            .Where(result => !minimumMatchScore.HasValue || result.MatchScore >= minimumMatchScore.Value)
+            .OrderByDescending(result => result.MatchScore)
+            .ThenByDescending(result => result.Job.PublishedAtUtc ?? result.Job.CollectedAtUtc)
+            .ToArray();
     }
 
     private async Task PersistExecutionAsync(

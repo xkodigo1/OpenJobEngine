@@ -55,6 +55,21 @@ GET /api/matching/rules
 GET /api/jobs/{jobId}/history
 ```
 
+7. Crear una alerta persistida:
+
+```http
+POST /api/profiles/{profileId}/alerts
+```
+
+8. Disparar alertas manualmente o consumir dashboards operativos:
+
+```http
+POST /api/alerts/dispatch
+GET /api/metrics/alerts
+GET /api/metrics/matching
+GET /api/metrics/providers/operations
+```
+
 ## Respuesta de matching
 
 Cada match devuelve:
@@ -68,6 +83,19 @@ Cada match devuelve:
 - `languageFit`
 - la vacante enriquecida
 
+Los flujos de alertas reutilizan ese mismo resultado enriquecido y envian payloads webhook con:
+- `eventType`
+- `deliveryId`
+- `alertId`
+- `profileId`
+- `matchScore`
+- `matchBand`
+- `ruleVersion`
+- `strongMatches`
+- `partialMatches`
+- `hardFailures`
+- `job`
+
 ## Decisiones del core
 
 - No hay autenticacion incluida en esta capa.
@@ -75,3 +103,4 @@ Cada match devuelve:
 - El parsing de CV no muta el perfil implicitamente salvo que `applyToProfile` sea `true`.
 - El ranking es explicable y configurable desde `matching-rules.json`.
 - Las taxonomias de skills, idiomas y ubicaciones viven versionadas en el repo.
+- Las alertas pueden ser pasivas o webhook y su historial de delivery queda persistido.

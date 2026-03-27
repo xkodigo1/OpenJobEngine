@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OpenJobEngine.Infrastructure.Persistence;
 
@@ -10,9 +11,11 @@ using OpenJobEngine.Infrastructure.Persistence;
 namespace OpenJobEngine.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(OpenJobEngineDbContext))]
-    partial class OpenJobEngineDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260327230329_AddAlertDeliveries")]
+    partial class AddAlertDeliveries
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.14");
