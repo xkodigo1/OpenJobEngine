@@ -45,10 +45,28 @@ public sealed class JsonMatchingRulesProvider : IMatchingRulesProvider
             new ScorePenaltyRulesDto(
                 raw.Penalties.MaxQualityPenalty,
                 raw.Penalties.LowQualityThreshold,
-                raw.Penalties.MissingSkillSignalsPenalty));
+                raw.Penalties.MissingSkillSignalsPenalty,
+                raw.Penalties.HardFailurePenalty,
+                raw.Penalties.ExcludedWorkModePenalty,
+                raw.Penalties.CompanyKeywordExclusionPenalty,
+                raw.Penalties.TimezoneMismatchPenalty),
+            new MatchHardRequirementRulesDto(
+                raw.HardRequirements.MinimumRequiredSkillsCoverage,
+                raw.HardRequirements.MinimumLanguageCoverage),
+            new MatchToleranceRulesDto(
+                raw.Tolerances.SalaryCloseMatchRatio,
+                raw.Tolerances.CompanyKeywordInclusionBoost,
+                raw.Tolerances.TimezoneMatchBoost,
+                raw.Tolerances.NewHighPriorityThreshold));
     }
 
-    private sealed record MatchingRulesFile(string Version, SkillRulesFile Skills, WeightRulesFile Weights, PenaltyRulesFile Penalties);
+    private sealed record MatchingRulesFile(
+        string Version,
+        SkillRulesFile Skills,
+        WeightRulesFile Weights,
+        PenaltyRulesFile Penalties,
+        HardRequirementRulesFile HardRequirements,
+        ToleranceRulesFile Tolerances);
 
     private sealed record SkillRulesFile(decimal EquivalentSkillMultiplier, decimal RelatedSkillMultiplier);
 
@@ -61,5 +79,20 @@ public sealed class JsonMatchingRulesProvider : IMatchingRulesProvider
         decimal Salary,
         decimal Languages);
 
-    private sealed record PenaltyRulesFile(decimal MaxQualityPenalty, decimal LowQualityThreshold, decimal MissingSkillSignalsPenalty);
+    private sealed record PenaltyRulesFile(
+        decimal MaxQualityPenalty,
+        decimal LowQualityThreshold,
+        decimal MissingSkillSignalsPenalty,
+        decimal HardFailurePenalty,
+        decimal ExcludedWorkModePenalty,
+        decimal CompanyKeywordExclusionPenalty,
+        decimal TimezoneMismatchPenalty);
+
+    private sealed record HardRequirementRulesFile(decimal MinimumRequiredSkillsCoverage, decimal MinimumLanguageCoverage);
+
+    private sealed record ToleranceRulesFile(
+        decimal SalaryCloseMatchRatio,
+        decimal CompanyKeywordInclusionBoost,
+        decimal TimezoneMatchBoost,
+        decimal NewHighPriorityThreshold);
 }

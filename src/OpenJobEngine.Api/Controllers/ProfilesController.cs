@@ -192,6 +192,22 @@ public sealed class ProfilesController(
     }
 
     /// <summary>
+    /// Returns newly discovered high-priority matches since the previous matching execution for the profile.
+    /// </summary>
+    [HttpGet("{profileId:guid}/matches/new-high-priority")]
+    [ProducesResponseType(typeof(MatchingSearchResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MatchingSearchResultDto>> GetNewHighPriorityMatches(
+        Guid profileId,
+        [FromQuery] decimal? minimumMatchScore = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await matchingService.GetNewHighPriorityMatchesAsync(profileId, minimumMatchScore, page, pageSize, cancellationToken));
+    }
+
+    /// <summary>
     /// Lists the saved searches of a candidate profile.
     /// </summary>
     [HttpGet("{profileId:guid}/saved-searches")]

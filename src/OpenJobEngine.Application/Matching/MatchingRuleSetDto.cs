@@ -4,7 +4,9 @@ public sealed record MatchingRuleSetDto(
     string Version,
     SkillMatchingRulesDto Skills,
     ScoreWeightRulesDto Weights,
-    ScorePenaltyRulesDto Penalties);
+    ScorePenaltyRulesDto Penalties,
+    MatchHardRequirementRulesDto HardRequirements,
+    MatchToleranceRulesDto Tolerances);
 
 public sealed record SkillMatchingRulesDto(
     decimal EquivalentSkillMultiplier,
@@ -22,4 +24,18 @@ public sealed record ScoreWeightRulesDto(
 public sealed record ScorePenaltyRulesDto(
     decimal MaxQualityPenalty,
     decimal LowQualityThreshold,
-    decimal MissingSkillSignalsPenalty);
+    decimal MissingSkillSignalsPenalty,
+    decimal HardFailurePenalty,
+    decimal ExcludedWorkModePenalty,
+    decimal CompanyKeywordExclusionPenalty,
+    decimal TimezoneMismatchPenalty);
+
+public sealed record MatchHardRequirementRulesDto(
+    decimal MinimumRequiredSkillsCoverage,
+    decimal MinimumLanguageCoverage);
+
+public sealed record MatchToleranceRulesDto(
+    decimal SalaryCloseMatchRatio,
+    decimal CompanyKeywordInclusionBoost,
+    decimal TimezoneMatchBoost,
+    decimal NewHighPriorityThreshold);

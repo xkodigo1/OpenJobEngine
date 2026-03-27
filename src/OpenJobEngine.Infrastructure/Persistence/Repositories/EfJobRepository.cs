@@ -16,6 +16,7 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
     private IQueryable<JobOffer> QueryWithDetails()
     {
         return dbContext.JobOffers
+            .AsSplitQuery()
             .Include(x => x.SkillTags)
             .Include(x => x.LanguageRequirements);
     }
@@ -94,11 +95,14 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
 
     public async Task<IReadOnlyCollection<JobOfferHistoryEntry>> GetHistoryAsync(Guid jobId, CancellationToken cancellationToken)
     {
-        return await dbContext.JobOfferHistoryEntries
+        var entries = await dbContext.JobOfferHistoryEntries
             .AsNoTracking()
             .Where(x => x.JobOfferId == jobId)
-            .OrderByDescending(x => x.OccurredAtUtc)
             .ToListAsync(cancellationToken);
+
+        return entries
+            .OrderByDescending(x => x.OccurredAtUtc)
+            .ToArray();
     }
 
     public async Task<PagedResult<JobOffer>> SearchAsync(JobSearchFilter filter, CancellationToken cancellationToken)
@@ -152,23 +156,29 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
             query = query.Where(x => x.SourceName.ToLower().Contains(source));
         }
 
-        var totalCount = await query.LongCountAsync(cancellationToken);
         var items = await query
+            .ToListAsync(cancellationToken);
+
+        var totalCount = items.LongCount();
+        var pagedItems = items
             .OrderByDescending(x => x.PublishedAtUtc ?? x.CollectedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync(cancellationToken);
+            .ToArray();
 
-        return new PagedResult<JobOffer>(items, page, pageSize, totalCount);
+        return new PagedResult<JobOffer>(pagedItems, page, pageSize, totalCount);
     }
 
     public async Task<IReadOnlyCollection<JobOffer>> ListActiveAsync(CancellationToken cancellationToken)
     {
-        return await QueryWithDetails()
+        var items = await QueryWithDetails()
             .AsNoTracking()
             .Where(x => x.IsActive)
-            .OrderByDescending(x => x.PublishedAtUtc ?? x.CollectedAtUtc)
             .ToListAsync(cancellationToken);
+
+        return items
+            .OrderByDescending(x => x.PublishedAtUtc ?? x.CollectedAtUtc)
+            .ToArray();
     }
 
     public Task<long> CountAsync(bool activeOnly, CancellationToken cancellationToken)

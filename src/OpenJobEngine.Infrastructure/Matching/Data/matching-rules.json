@@ -16,6 +16,20 @@
   "penalties": {
     "maxQualityPenalty": 15,
     "lowQualityThreshold": 0.45,
-    "missingSkillSignalsPenalty": 8
+    "missingSkillSignalsPenalty": 8,
+    "hardFailurePenalty": 18,
+    "excludedWorkModePenalty": 20,
+    "companyKeywordExclusionPenalty": 18,
+    "timezoneMismatchPenalty": 6
+  },
+  "hardRequirements": {
+    "minimumRequiredSkillsCoverage": 0.6,
+    "minimumLanguageCoverage": 0.5
+  },
+  "tolerances": {
+    "salaryCloseMatchRatio": 0.85,
+    "companyKeywordInclusionBoost": 5,
+    "timezoneMatchBoost": 4,
+    "newHighPriorityThreshold": 75
   }
 }

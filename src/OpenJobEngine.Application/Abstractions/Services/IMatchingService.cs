@@ -8,5 +8,12 @@ public interface IMatchingService
 
     Task<JobMatchResultDto?> GetJobMatchAsync(Guid profileId, Guid jobId, CancellationToken cancellationToken);
 
+    Task<MatchingSearchResultDto> GetNewHighPriorityMatchesAsync(
+        Guid profileId,
+        decimal? minimumMatchScore,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
+
     MatchingRuleSetDto GetCurrentRules();
 }

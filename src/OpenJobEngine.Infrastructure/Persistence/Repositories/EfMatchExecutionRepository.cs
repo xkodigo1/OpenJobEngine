@@ -16,4 +16,16 @@ public sealed class EfMatchExecutionRepository(OpenJobEngineDbContext dbContext)
         var threshold = DateTimeOffset.UtcNow.AddDays(-Math.Abs(days <= 0 ? 7 : days));
         return dbContext.MatchExecutions.AsNoTracking().CountAsync(x => x.CreatedAtUtc >= threshold, cancellationToken);
     }
+
+    public async Task<MatchExecution?> GetLatestForProfileAsync(Guid profileId, CancellationToken cancellationToken)
+    {
+        var executions = await dbContext.MatchExecutions
+            .AsNoTracking()
+            .Where(x => x.CandidateProfileId == profileId)
+            .ToListAsync(cancellationToken);
+
+        return executions
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .FirstOrDefault();
+    }
 }
