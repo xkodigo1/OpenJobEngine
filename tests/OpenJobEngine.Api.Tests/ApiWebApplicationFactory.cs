@@ -16,6 +16,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Persistence:Provider"] = "Sqlite",
+                ["Persistence:ApplyMigrationsOnStartup"] = "true",
                 ["ConnectionStrings:Sqlite"] = $"Data Source={sqlitePath}",
                 ["Providers:Computrabajo:Enabled"] = "false",
                 ["Providers:Adzuna:Enabled"] = "false",
