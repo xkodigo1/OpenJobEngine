@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OpenJobEngine.Api.Contracts;
 using OpenJobEngine.Application.Abstractions.Collections;
 using OpenJobEngine.Application.Abstractions.Services;
-using OpenJobEngine.Application.Common;
 using OpenJobEngine.Application.Matching;
 using OpenJobEngine.Application.Profiles;
 using OpenJobEngine.Application.Resume;
@@ -42,7 +42,12 @@ public sealed class ProfilesController(
     public async Task<ActionResult<CandidateProfileDto>> GetProfile(Guid profileId, CancellationToken cancellationToken)
     {
         var profile = await candidateProfileService.GetByIdAsync(profileId, cancellationToken);
-        return Ok(RequireProfile(profile, profileId));
+        return profile is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(profile);
     }
 
     /// <summary>
@@ -58,7 +63,12 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var profile = await candidateProfileService.UpdateAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(profile, profileId));
+        return profile is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(profile);
     }
 
     /// <summary>
@@ -74,7 +84,12 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var profile = await candidateProfileService.UpdatePreferencesAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(profile, profileId));
+        return profile is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(profile);
     }
 
     /// <summary>
@@ -90,7 +105,12 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var profile = await candidateProfileService.UpdateSkillsAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(profile, profileId));
+        return profile is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(profile);
     }
 
     /// <summary>
@@ -106,7 +126,12 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var profile = await candidateProfileService.UpdateLanguagesAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(profile, profileId));
+        return profile is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(profile);
     }
 
     /// <summary>
@@ -116,6 +141,8 @@ public sealed class ProfilesController(
     [ProducesResponseType(typeof(ResumeImportPreviewDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [EnableRateLimiting("resume-import")]
     public async Task<ActionResult<ResumeImportPreviewDto>> ImportResume(
         Guid profileId,
         [FromForm] ResumeUploadRequest request,
@@ -134,7 +161,12 @@ public sealed class ProfilesController(
                 request.ApplyToProfile),
             cancellationToken);
 
-        return Ok(RequireProfile(preview, profileId));
+        return preview is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(preview);
     }
 
     /// <summary>
@@ -182,7 +214,12 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var savedSearch = await candidateProfileService.AddSavedSearchAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(savedSearch, profileId));
+        return savedSearch is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(savedSearch);
     }
 
     /// <summary>
@@ -198,11 +235,11 @@ public sealed class ProfilesController(
         CancellationToken cancellationToken)
     {
         var alert = await candidateProfileService.AddAlertAsync(profileId, request, cancellationToken);
-        return Ok(RequireProfile(alert, profileId));
-    }
-
-    private static T RequireProfile<T>(T? value, Guid profileId) where T : class
-    {
-        return value ?? throw new ResourceNotFoundException($"Candidate profile '{profileId:D}' was not found.");
+        return alert is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Candidate profile '{profileId:D}' was not found.")
+            : Ok(alert);
     }
 }
