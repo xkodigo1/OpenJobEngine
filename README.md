@@ -98,6 +98,7 @@ Release progression:
 
 Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
+Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
 
@@ -199,6 +200,8 @@ Flujo recomendado:
 4. subir CV
 5. pedir matches
 6. revisar historico y metricas
+
+Las respuestas de error comunes ahora se exponen como `application/problem+json`.
 
 ## Estado actual
 
