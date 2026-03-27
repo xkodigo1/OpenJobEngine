@@ -4,7 +4,7 @@ OpenJobEngine uses Semantic Versioning with Git Flow.
 
 ## Current baseline
 
-- Current working version: `0.2.0-beta.1`
+- Current working version: `0.3.0-beta.3`
 - Current release stage: `beta`
 - Tag format: `v<version>`
 
@@ -97,6 +97,17 @@ Important:
 
 - because the repo already uses tag prefix `v`, the release name should be `0.1.0-demo.1`, not `v0.1.0-demo.1`
 - the resulting tag will be `v0.1.0-demo.1`
+- release notes should be exported from `CHANGELOG.md` and attached to the tag or GitHub Release body
+
+Release notes export:
+
+```powershell
+.\scripts\export-release-notes.ps1 -Version 0.4.0-beta.1 -OutputPath artifacts\release-notes\v0.4.0-beta.1.md
+```
+
+```bash
+./scripts/export-release-notes.sh --version 0.4.0-beta.1 --output artifacts/release-notes/v0.4.0-beta.1.md
+```
 
 ### Hotfix branches
 
@@ -125,25 +136,18 @@ Default properties:
 - `FileVersion`
 - `InformationalVersion`
 
-For the current demo cycle:
+For the current beta line:
 
 ```xml
-<VersionPrefix>0.2.0</VersionPrefix>
-<VersionSuffix>beta.1</VersionSuffix>
-```
-
-To move to beta:
-
-```xml
-<VersionPrefix>0.2.0</VersionPrefix>
-<VersionSuffix>beta.1</VersionSuffix>
+<VersionPrefix>0.3.0</VersionPrefix>
+<VersionSuffix>beta.3</VersionSuffix>
 ```
 
 To move to the next beta iteration:
 
 ```xml
-<VersionPrefix>0.2.1</VersionPrefix>
-<VersionSuffix>beta.2</VersionSuffix>
+<VersionPrefix>0.4.0</VersionPrefix>
+<VersionSuffix>beta.1</VersionSuffix>
 ```
 
 To publish the first stable:
@@ -174,4 +178,19 @@ dotnet build OpenJobEngine.sln -c Release
 
 5. Finish the release or hotfix branch.
 6. Push `develop`, `main` and tags.
-7. Publish the release notes in the annotated tag or GitHub release body using the same version tag.
+7. Export release notes from `CHANGELOG.md` and publish them in the annotated tag or GitHub release body using the same version tag.
+8. Record any public API change in `docs/api-compatibility.md` and call it out explicitly in the release notes.
+
+## API compatibility discipline
+
+OpenJobEngine is still in the `0.x` line, but public API changes should be handled deliberately:
+
+- additive fields are preferred over renames
+- new endpoints should preserve existing contracts
+- response envelopes should stay stable once released
+- breaking changes must be documented in `CHANGELOG.md` and the release notes
+
+Pragmatic rule for this repo:
+
+- if an API change affects current consumers, treat it as a release decision, not an implementation detail
+- use `docs/api-compatibility.md` as the short checklist before cutting a release

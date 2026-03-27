@@ -9,6 +9,53 @@ namespace OpenJobEngine.Infrastructure.Services;
 
 public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
 {
+    private static readonly string[] SalaryKeywords =
+    [
+        "salary",
+        "salario",
+        "sueldo",
+        "compensation",
+        "compensacion",
+        "pay",
+        "remuneracion",
+        "remuneración",
+        "usd",
+        "us$",
+        "eur",
+        "cop",
+        "mxn",
+        "ars",
+        "clp",
+        "pen",
+        "brl",
+        "soles",
+        "pesos",
+        "dolares",
+        "dólares"
+    ];
+
+    private static readonly string[] UnsupportedSalaryPeriodKeywords =
+    [
+        "hourly",
+        "per hour",
+        "/hr",
+        "/hour",
+        "por hora",
+        "hora",
+        "hour rate"
+    ];
+
+    private static readonly IReadOnlyDictionary<string, string> CurrencyByCountryCode = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["CO"] = "COP",
+        ["MX"] = "MXN",
+        ["AR"] = "ARS",
+        ["CL"] = "CLP",
+        ["PE"] = "PEN",
+        ["BR"] = "BRL",
+        ["UY"] = "UYU"
+    };
+
     private readonly IReadOnlyCollection<CatalogSkillDefinition> skills;
     private readonly IReadOnlyCollection<CatalogLanguageDefinition> languages;
     private readonly IReadOnlyCollection<CatalogLocationDefinition> locations;
@@ -28,13 +75,13 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         var skillTags = ExtractSkillTags(jobOffer.Id, corpus);
         var languageRequirements = ExtractLanguageRequirements(jobOffer.Id, corpus);
         var seniorityLevel = ResolveSeniority(corpus, jobOffer.SeniorityLevel);
-        var (salaryMin, salaryMax, salaryCurrency) = ResolveSalary(jobOffer, rawJobOffer, corpus);
-        var qualityFlags = BuildQualityFlags(jobOffer, skillTags, languageRequirements, workMode, countryCode);
-        var qualityScore = CalculateQualityScore(jobOffer, skillTags.Count, languageRequirements.Count, qualityFlags.Count, workMode, countryCode);
+        var salary = ResolveSalary(jobOffer, rawJobOffer, countryCode);
+        var qualityFlags = BuildQualityFlags(jobOffer, skillTags, languageRequirements, workMode, city, countryCode, salary);
+        var qualityScore = CalculateQualityScore(jobOffer, skillTags.Count, languageRequirements.Count, qualityFlags, workMode, city, countryCode, salary);
 
         jobOffer.SetSeniorityLevel(seniorityLevel);
         jobOffer.SetLocation(city, region, countryCode, timeZone, workMode);
-        jobOffer.SetSalary(jobOffer.SalaryText, salaryMin, salaryMax, salaryCurrency);
+        jobOffer.SetSalary(jobOffer.SalaryText, salary.SalaryMin, salary.SalaryMax, salary.Currency);
         jobOffer.ReplaceSkillTags(skillTags);
         jobOffer.ReplaceLanguageRequirements(languageRequirements);
         jobOffer.SetQuality(qualityScore, qualityFlags);
@@ -191,7 +238,7 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             return current;
         }
 
-        if (corpus.Contains("lead") || corpus.Contains("principal"))
+        if (corpus.Contains("lead") || corpus.Contains("principal") || corpus.Contains("staff"))
         {
             return SeniorityLevel.Lead;
         }
@@ -219,44 +266,229 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         return current;
     }
 
-    private static (decimal? SalaryMin, decimal? SalaryMax, string? Currency) ResolveSalary(JobOffer jobOffer, RawJobOffer rawJobOffer, string corpus)
+    private static SalaryNormalizationResult ResolveSalary(JobOffer jobOffer, RawJobOffer rawJobOffer, string? countryCode)
     {
+        var existingCurrency = ResolveCurrency(jobOffer.SalaryText, countryCode);
         if (jobOffer.SalaryMin.HasValue || jobOffer.SalaryMax.HasValue)
         {
-            return (jobOffer.SalaryMin, jobOffer.SalaryMax, jobOffer.SalaryCurrency);
+            return new SalaryNormalizationResult(
+                jobOffer.SalaryMin,
+                jobOffer.SalaryMax,
+                string.IsNullOrWhiteSpace(jobOffer.SalaryCurrency) ? existingCurrency.Currency : jobOffer.SalaryCurrency,
+                string.IsNullOrWhiteSpace(jobOffer.SalaryCurrency) && existingCurrency.IsInferred,
+                false,
+                false,
+                false);
         }
 
-        var salaryCorpus = string.Join(" ", new[]
+        var salarySource = BuildSalarySource(jobOffer, rawJobOffer);
+        if (string.IsNullOrWhiteSpace(salarySource))
         {
-            jobOffer.SalaryText,
-            jobOffer.Description,
-            rawJobOffer.Metadata.TryGetValue("salary", out var salaryMetadata) ? salaryMetadata : null
-        }.Where(x => !string.IsNullOrWhiteSpace(x))).ToLowerInvariant();
-
-        if (string.IsNullOrWhiteSpace(salaryCorpus))
-        {
-            return (null, null, null);
+            return SalaryNormalizationResult.Empty;
         }
 
-        var numbers = SalaryNumberRegex().Matches(salaryCorpus)
-            .Select(match => ParseDecimal(match.Value))
-            .Where(value => value.HasValue)
-            .Select(value => value!.Value)
+        var currency = ResolveCurrency(salarySource, countryCode);
+        var normalizedSalarySource = salarySource.ToLowerInvariant();
+        var hasUnsupportedPeriod = UnsupportedSalaryPeriodKeywords.Any(keyword => normalizedSalarySource.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+        if (hasUnsupportedPeriod)
+        {
+            return new SalaryNormalizationResult(
+                null,
+                null,
+                currency.Currency,
+                currency.IsInferred,
+                false,
+                true,
+                true);
+        }
+
+        var amounts = SalaryTokenRegex().Matches(salarySource)
+            .Select(match => NormalizeSalaryAmount(match.Groups["amount"].Value, match.Groups["suffix"].Value))
+            .Where(amount => amount.HasValue)
+            .Select(amount => amount!.Value)
+            .Where(amount => amount > 0)
+            .Take(4)
             .ToArray();
 
-        var currency = salaryCorpus.Contains("usd") || salaryCorpus.Contains("us$")
-            ? "USD"
-            : salaryCorpus.Contains("eur") || salaryCorpus.Contains("€")
-                ? "EUR"
-                : salaryCorpus.Contains("cop") || salaryCorpus.Contains("colomb")
-                    ? "COP"
-                    : null;
-
-        return numbers.Length switch
+        if (amounts.Length == 0)
         {
-            0 => (null, null, currency),
-            1 => (numbers[0], numbers[0], currency),
-            _ => (Math.Min(numbers[0], numbers[1]), Math.Max(numbers[0], numbers[1]), currency)
+            return new SalaryNormalizationResult(null, null, currency.Currency, currency.IsInferred, false, true, false);
+        }
+
+        if (amounts.Any(amount => amount < 10))
+        {
+            return new SalaryNormalizationResult(null, null, currency.Currency, currency.IsInferred, false, true, false);
+        }
+
+        var salaryMin = amounts.Min();
+        var salaryMax = amounts.Max();
+        var hasSingleAmount = amounts.Length == 1;
+        var isOutlier = IsSalaryOutlier(salaryMin, salaryMax, currency.Currency);
+
+        return new SalaryNormalizationResult(
+            salaryMin,
+            hasSingleAmount ? salaryMin : salaryMax,
+            currency.Currency,
+            currency.IsInferred,
+            isOutlier,
+            false,
+            false);
+    }
+
+    private static string? BuildSalarySource(JobOffer jobOffer, RawJobOffer rawJobOffer)
+    {
+        var fragments = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(jobOffer.SalaryText))
+        {
+            fragments.Add(jobOffer.SalaryText);
+        }
+
+        if (rawJobOffer.Metadata.TryGetValue("salary", out var salaryMetadata) &&
+            !string.IsNullOrWhiteSpace(salaryMetadata))
+        {
+            fragments.Add(salaryMetadata);
+        }
+
+        if (!string.IsNullOrWhiteSpace(jobOffer.Description))
+        {
+            var salarySnippets = jobOffer.Description
+                .Split(['\r', '\n', '.', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(ContainsSalaryHint)
+                .ToArray();
+
+            if (salarySnippets.Length > 0)
+            {
+                fragments.AddRange(salarySnippets);
+            }
+        }
+
+        return fragments.Count == 0
+            ? null
+            : string.Join(" ", fragments.Where(fragment => !string.IsNullOrWhiteSpace(fragment)));
+    }
+
+    private static bool ContainsSalaryHint(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var normalized = text.ToLowerInvariant();
+        return SalaryKeywords.Any(keyword => normalized.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+               normalized.Contains("$", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Contains("€", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Contains("s/", StringComparison.OrdinalIgnoreCase) ||
+               normalized.Contains("r$", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (string? Currency, bool IsInferred) ResolveCurrency(string? salaryText, string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(salaryText))
+        {
+            return TryInferCurrencyFromCountry(countryCode);
+        }
+
+        var normalized = salaryText.ToLowerInvariant();
+        if (normalized.Contains("usd") || normalized.Contains("us$") || normalized.Contains("dolares") || normalized.Contains("dólares"))
+        {
+            return ("USD", false);
+        }
+
+        if (normalized.Contains("eur") || normalized.Contains("€"))
+        {
+            return ("EUR", false);
+        }
+
+        if (normalized.Contains("cop") || normalized.Contains("colombian peso") || normalized.Contains("colombianos"))
+        {
+            return ("COP", false);
+        }
+
+        if (normalized.Contains("mxn") || normalized.Contains("mex$") || normalized.Contains("pesos mexicanos"))
+        {
+            return ("MXN", false);
+        }
+
+        if (normalized.Contains("ars") || normalized.Contains("ar$") || normalized.Contains("pesos argentinos"))
+        {
+            return ("ARS", false);
+        }
+
+        if (normalized.Contains("clp") || normalized.Contains("pesos chilenos"))
+        {
+            return ("CLP", false);
+        }
+
+        if (normalized.Contains("pen") || normalized.Contains("s/") || normalized.Contains("soles"))
+        {
+            return ("PEN", false);
+        }
+
+        if (normalized.Contains("brl") || normalized.Contains("r$") || normalized.Contains("reales"))
+        {
+            return ("BRL", false);
+        }
+
+        if (normalized.Contains("$", StringComparison.OrdinalIgnoreCase) || normalized.Contains("peso", StringComparison.OrdinalIgnoreCase))
+        {
+            return TryInferCurrencyFromCountry(countryCode);
+        }
+
+        return (null, false);
+    }
+
+    private static (string? Currency, bool IsInferred) TryInferCurrencyFromCountry(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
+        {
+            return (null, false);
+        }
+
+        return CurrencyByCountryCode.TryGetValue(countryCode.Trim(), out var currency)
+            ? (currency, true)
+            : (null, false);
+    }
+
+    private static decimal? NormalizeSalaryAmount(string amountText, string suffixText)
+    {
+        var amount = ParseDecimal(amountText);
+        if (!amount.HasValue)
+        {
+            return null;
+        }
+
+        var normalizedSuffix = suffixText.Trim().ToLowerInvariant();
+        var multiplier = normalizedSuffix switch
+        {
+            "k" => 1_000m,
+            "mil" => 1_000m,
+            "thousand" => 1_000m,
+            "m" => 1_000_000m,
+            "mm" => 1_000_000m,
+            "million" => 1_000_000m,
+            "millon" => 1_000_000m,
+            "millones" => 1_000_000m,
+            _ => 1m
+        };
+
+        return decimal.Round(amount.Value * multiplier, 2);
+    }
+
+    private static bool IsSalaryOutlier(decimal salaryMin, decimal salaryMax, string? currency)
+    {
+        if (salaryMax <= 0)
+        {
+            return false;
+        }
+
+        return currency?.ToUpperInvariant() switch
+        {
+            "USD" or "EUR" => salaryMax > 1_000_000m,
+            "COP" => salaryMax > 1_000_000_000m,
+            "MXN" or "ARS" or "CLP" or "PEN" or "BRL" or "UYU" => salaryMax > 500_000_000m,
+            _ => false
         };
     }
 
@@ -290,7 +522,9 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         IReadOnlyCollection<JobOfferSkillTag> skillTags,
         IReadOnlyCollection<JobOfferLanguageRequirement> languageRequirements,
         WorkMode workMode,
-        string? countryCode)
+        string? city,
+        string? countryCode,
+        SalaryNormalizationResult salary)
     {
         var flags = new List<string>();
 
@@ -317,13 +551,33 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             flags.Add("missing_language_signals");
         }
 
-        if (jobOffer.SalaryMin is null && jobOffer.SalaryMax is null)
+        if (salary.SalaryMin is null && salary.SalaryMax is null)
         {
             flags.Add("missing_salary");
         }
-        else if (string.IsNullOrWhiteSpace(jobOffer.SalaryCurrency))
+        else if (string.IsNullOrWhiteSpace(salary.Currency))
         {
             flags.Add("missing_salary_currency");
+        }
+
+        if (salary.IsCurrencyInferred)
+        {
+            flags.Add("salary_currency_inferred");
+        }
+
+        if (salary.IsAmbiguous)
+        {
+            flags.Add("salary_amount_ambiguous");
+        }
+
+        if (salary.HasUnsupportedPeriod)
+        {
+            flags.Add("salary_period_unsupported");
+        }
+
+        if (salary.IsOutlier)
+        {
+            flags.Add("salary_amount_outlier");
         }
 
         if (workMode == WorkMode.Unknown)
@@ -334,6 +588,11 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         if (string.IsNullOrWhiteSpace(countryCode))
         {
             flags.Add("missing_structured_location");
+        }
+        else if (string.Equals(countryCode, "LATAM", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(city, "Remote", StringComparison.OrdinalIgnoreCase))
+        {
+            flags.Add("broad_location_only");
         }
 
         if (jobOffer.SeniorityLevel == SeniorityLevel.Unknown)
@@ -348,9 +607,11 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
         JobOffer jobOffer,
         int skillCount,
         int languageCount,
-        int flagCount,
+        IReadOnlyCollection<string> qualityFlags,
         WorkMode workMode,
-        string? countryCode)
+        string? city,
+        string? countryCode,
+        SalaryNormalizationResult salary)
     {
         decimal score = 0.15m;
 
@@ -364,9 +625,9 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             score += skillCount >= 3 ? 0.24m : 0.16m;
         }
 
-        if (jobOffer.SalaryMin.HasValue || jobOffer.SalaryMax.HasValue)
+        if (salary.SalaryMin.HasValue || salary.SalaryMax.HasValue)
         {
-            score += !string.IsNullOrWhiteSpace(jobOffer.SalaryCurrency) ? 0.14m : 0.08m;
+            score += !string.IsNullOrWhiteSpace(salary.Currency) && !salary.IsCurrencyInferred ? 0.14m : 0.08m;
         }
 
         if (workMode != WorkMode.Unknown)
@@ -376,7 +637,12 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
 
         if (!string.IsNullOrWhiteSpace(countryCode))
         {
-            score += 0.08m;
+            score += string.Equals(countryCode, "LATAM", StringComparison.OrdinalIgnoreCase) ? 0.04m : 0.08m;
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            score += 0.03m;
         }
 
         if (jobOffer.SeniorityLevel != SeniorityLevel.Unknown)
@@ -389,8 +655,20 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             score += 0.05m;
         }
 
-        score -= Math.Min(0.3m, flagCount * 0.03m);
+        var penalty = 0m;
+        foreach (var flag in qualityFlags)
+        {
+            penalty += flag switch
+            {
+                "salary_currency_inferred" => 0.01m,
+                "broad_location_only" => 0.02m,
+                "thin_description" => 0.03m,
+                "salary_amount_ambiguous" or "salary_period_unsupported" or "salary_amount_outlier" => 0.05m,
+                _ => 0.03m
+            };
+        }
 
+        score -= Math.Min(0.32m, penalty);
         return Math.Clamp(score, 0.05m, 0.99m);
     }
 
@@ -419,6 +697,18 @@ public sealed partial class DefaultJobEnrichmentService : IJobEnrichmentService
             : null;
     }
 
-    [GeneratedRegex(@"(?<!\w)\d{1,3}(?:[.,\s]\d{3})*(?:[.,]\d+)?(?!\w)", RegexOptions.Compiled)]
-    private static partial Regex SalaryNumberRegex();
+    private sealed record SalaryNormalizationResult(
+        decimal? SalaryMin,
+        decimal? SalaryMax,
+        string? Currency,
+        bool IsCurrencyInferred,
+        bool IsOutlier,
+        bool IsAmbiguous,
+        bool HasUnsupportedPeriod)
+    {
+        public static SalaryNormalizationResult Empty { get; } = new(null, null, null, false, false, false, false);
+    }
+
+    [GeneratedRegex(@"(?<![A-Za-z0-9])(?<amount>\d{1,3}(?:[.,\s]\d{3})*(?:[.,]\d+)?)(?:\s*(?<suffix>k|m|mm|mil|thousand|million|millon|millones))?(?![A-Za-z0-9])", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex SalaryTokenRegex();
 }

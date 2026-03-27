@@ -84,7 +84,13 @@ git push origin develop
 git push origin main --tags
 ```
 
-Release branches are only for minor fixes, docs and versioning work. Do not add new features there.
+Release branches are only for minor fixes, docs, versioning work and exportable release-note preparation. Do not add new features there.
+
+Before finish:
+
+- export release notes from `CHANGELOG.md`
+- review `docs/api-compatibility.md` for any public API changes
+- keep the tag body aligned with the changelog section
 
 ## Hotfix flow
 

@@ -194,6 +194,7 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
 
     public async Task<IReadOnlyCollection<ProviderQualityMetricsDto>> GetProviderQualityMetricsAsync(CancellationToken cancellationToken)
     {
+        var now = DateTimeOffset.UtcNow;
         var rows = await dbContext.JobOfferSourceObservations
             .AsNoTracking()
             .Where(x => x.IsActive)
@@ -204,8 +205,12 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
                 (observation, job) => new
                 {
                     observation.SourceName,
+                    observation.LastSeenAtUtc,
                     job.QualityScore,
-                    HasSalary = job.SalaryMin != null || job.SalaryMax != null,
+                    job.SalaryMin,
+                    job.SalaryMax,
+                    job.SalaryCurrency,
+                    job.QualityFlags,
                     HasLocation = job.CountryCode != null || job.City != null || job.Region != null,
                     HasSkills = dbContext.JobOfferSkillTags.Any(tag => tag.JobOfferId == job.Id),
                     HasLanguages = dbContext.JobOfferLanguageRequirements.Any(language => language.JobOfferId == job.Id)
@@ -221,12 +226,27 @@ public sealed class EfJobRepository(OpenJobEngineDbContext dbContext) : IJobRepo
                     group.Key,
                     total,
                     total == 0 ? 0m : decimal.Round(group.Average(x => x.QualityScore), 2),
-                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasSalary) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.SalaryMin != null || x.SalaryMax != null) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x =>
+                        (x.SalaryMin != null || x.SalaryMax != null) &&
+                        !string.IsNullOrWhiteSpace(x.SalaryCurrency) &&
+                        !ContainsQualityFlag(x.QualityFlags, "salary_amount_ambiguous") &&
+                        !ContainsQualityFlag(x.QualityFlags, "salary_period_unsupported") &&
+                        !ContainsQualityFlag(x.QualityFlags, "salary_amount_outlier")) / (decimal)total, 4),
                     total == 0 ? 0m : decimal.Round(group.Count(x => x.HasLocation) / (decimal)total, 4),
                     total == 0 ? 0m : decimal.Round(group.Count(x => x.HasSkills) / (decimal)total, 4),
-                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasLanguages) / (decimal)total, 4));
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.HasLanguages) / (decimal)total, 4),
+                    total == 0 ? 0m : decimal.Round(group.Count(x => x.QualityScore < 0.55m) / (decimal)total, 4),
+                    total == 0 ? null : decimal.Round(group.Average(x => (decimal)Math.Max(0, (now - x.LastSeenAtUtc).TotalHours)), 2));
             })
             .OrderByDescending(x => x.TotalActiveJobs)
             .ToArray();
+    }
+
+    private static bool ContainsQualityFlag(string? qualityFlags, string value)
+    {
+        return !string.IsNullOrWhiteSpace(qualityFlags) &&
+               qualityFlags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                   .Any(flag => string.Equals(flag, value, StringComparison.OrdinalIgnoreCase));
     }
 }
