@@ -19,10 +19,13 @@ public sealed class EfScrapeExecutionRepository(OpenJobEngineDbContext dbContext
 
     public async Task<IReadOnlyCollection<ScrapeExecution>> GetRecentAsync(int take, CancellationToken cancellationToken)
     {
-        return await dbContext.ScrapeExecutions
+        var items = await dbContext.ScrapeExecutions
             .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return items
             .OrderByDescending(x => x.StartedAtUtc)
             .Take(take <= 0 ? 20 : take)
-            .ToListAsync(cancellationToken);
+            .ToArray();
     }
 }
