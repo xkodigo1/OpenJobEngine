@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Xunit;
@@ -8,7 +9,10 @@ namespace OpenJobEngine.Api.Tests;
 
 public sealed class ApiProblemDetailsAndVersionTests : IClassFixture<ApiWebApplicationFactory>
 {
-    private const string ExpectedVersion = "0.1.0-demo.1";
+    private static readonly string ExpectedVersion = typeof(Program).Assembly
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion?
+        .Split('+', 2)[0]
+        ?? "0.0.0";
     private readonly HttpClient client;
 
     public ApiProblemDetailsAndVersionTests(ApiWebApplicationFactory factory)

@@ -8,6 +8,24 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 No changes yet.
 
+## [0.1.1-demo.2] - 2026-03-27
+
+### Added
+
+- Repository roadmap with staged releases from demo to stable.
+- Integration tests covering Swagger version exposure and `application/problem+json` responses.
+
+### Changed
+
+- Centralized API exception handling with consistent `ProblemDetails` payloads.
+- Swagger/OpenAPI descriptions for the current public controllers and endpoints.
+- Demo smoke flow documentation with version header expectations.
+
+### Fixed
+
+- EF Core aggregate navigation mappings for `CandidateProfile` and `JobOffer` collections.
+- Version header and `ProblemDetails` payloads now expose the clean release version without build metadata.
+
 ## [0.1.0-demo.1] - 2026-03-27
 
 ### Added
