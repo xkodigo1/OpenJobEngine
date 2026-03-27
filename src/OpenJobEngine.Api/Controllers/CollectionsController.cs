@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OpenJobEngine.Application.Abstractions.Collections;
 using OpenJobEngine.Application.Collections;
 
@@ -17,6 +18,8 @@ public sealed class CollectionsController(IJobCollectionService jobCollectionSer
     [HttpPost("run")]
     [ProducesResponseType(typeof(CollectionRunResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [EnableRateLimiting("collections")]
     public async Task<ActionResult<CollectionRunResultDto>> RunAllCollections(CancellationToken cancellationToken)
     {
         return Ok(await jobCollectionService.RunAllAsync(cancellationToken));
@@ -29,6 +32,8 @@ public sealed class CollectionsController(IJobCollectionService jobCollectionSer
     [ProducesResponseType(typeof(CollectionRunResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [EnableRateLimiting("collections")]
     public async Task<ActionResult<CollectionRunResultDto>> RunCollectionBySource(
         [FromRoute] string source,
         CancellationToken cancellationToken)

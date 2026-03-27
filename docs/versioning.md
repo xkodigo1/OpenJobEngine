@@ -4,8 +4,8 @@ OpenJobEngine uses Semantic Versioning with Git Flow.
 
 ## Current baseline
 
-- Current working version: `0.1.1-demo.2`
-- Current release stage: `demo`
+- Current working version: `0.2.0-beta.1`
+- Current release stage: `beta`
 - Tag format: `v<version>`
 
 Examples:
@@ -128,8 +128,8 @@ Default properties:
 For the current demo cycle:
 
 ```xml
-<VersionPrefix>0.1.1</VersionPrefix>
-<VersionSuffix>demo.2</VersionSuffix>
+<VersionPrefix>0.2.0</VersionPrefix>
+<VersionSuffix>beta.1</VersionSuffix>
 ```
 
 To move to beta:
@@ -137,6 +137,13 @@ To move to beta:
 ```xml
 <VersionPrefix>0.2.0</VersionPrefix>
 <VersionSuffix>beta.1</VersionSuffix>
+```
+
+To move to the next beta iteration:
+
+```xml
+<VersionPrefix>0.2.1</VersionPrefix>
+<VersionSuffix>beta.2</VersionSuffix>
 ```
 
 To publish the first stable:

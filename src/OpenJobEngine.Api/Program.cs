@@ -1,10 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
+using OpenJobEngine.Api.Health;
 using OpenJobEngine.Api.Infrastructure;
+using OpenJobEngine.Api.Options;
+using OpenJobEngine.Api.Security;
 using OpenJobEngine.Application;
+using OpenJobEngine.Infrastructure.Catalog;
 using OpenJobEngine.Infrastructure.DependencyInjection;
 using System.Reflection;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 var apiAssembly = Assembly.GetExecutingAssembly();
@@ -12,7 +19,18 @@ var apiVersion = (apiAssembly.GetCustomAttribute<AssemblyInformationalVersionAtt
     ?? apiAssembly.GetName().Version?.ToString()
     ?? "0.0.0")
     .Split('+', 2)[0];
+var apiSecurityOptions = builder.Configuration.GetSection("ApiSecurity").Get<ApiSecurityOptions>() ?? new ApiSecurityOptions();
 
+apiSecurityOptions.HeaderName = string.IsNullOrWhiteSpace(apiSecurityOptions.HeaderName)
+    ? "X-Api-Key"
+    : apiSecurityOptions.HeaderName.Trim();
+
+if (apiSecurityOptions.Enabled && string.IsNullOrWhiteSpace(apiSecurityOptions.ApiKey))
+{
+    throw new InvalidOperationException("ApiSecurity:ApiKey must be configured when ApiSecurity:Enabled is true.");
+}
+
+builder.Services.Configure<ApiSecurityOptions>(builder.Configuration.GetSection("ApiSecurity"));
 builder.Services.AddOpenJobEngineApplication();
 builder.Services.AddOpenJobEngineInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
@@ -47,6 +65,66 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
         };
     };
 });
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseConnectivityHealthCheck>("database")
+    .AddCheck<CatalogHealthCheck>("catalogs")
+    .AddCheck<MatchingRulesHealthCheck>("matching-rules");
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        var problemDetailsService = context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+        await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = context.HttpContext,
+            ProblemDetails = ApiProblemDetails.CreateForStatusCode(context.HttpContext, StatusCodes.Status429TooManyRequests)
+        });
+    };
+
+    options.AddPolicy("collections", httpContext =>
+    {
+        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 2,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+
+    options.AddPolicy("resume-import", httpContext =>
+    {
+        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+
+    options.AddPolicy("webhook-test", httpContext =>
+    {
+        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -61,6 +139,29 @@ builder.Services.AddSwaggerGen(options =>
         Version = apiVersion,
         Description = "Backend-first API for multi-source job aggregation, enrichment, candidate profiles, resume parsing, and explainable matching for tech talent."
     });
+
+    if (apiSecurityOptions.Enabled)
+    {
+        options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+        {
+            Name = apiSecurityOptions.HeaderName,
+            Type = SecuritySchemeType.ApiKey,
+            In = ParameterLocation.Header,
+            Description = "Provide the configured API key in the request header."
+        });
+
+        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "ApiKey"
+                }
+            }] = Array.Empty<string>()
+        });
+    }
 });
 
 var app = builder.Build();
@@ -72,6 +173,8 @@ app.Use(async (context, next) =>
 });
 
 app.UseExceptionHandler();
+app.UseMiddleware<ApiKeyMiddleware>();
+app.UseRateLimiter();
 app.UseStatusCodePages(async statusCodeContext =>
 {
     var response = statusCodeContext.HttpContext.Response;
@@ -88,6 +191,18 @@ app.UseStatusCodePages(async statusCodeContext =>
         ProblemDetails = ApiProblemDetails.CreateForStatusCode(statusCodeContext.HttpContext, response.StatusCode)
     });
 });
+
+app.MapGet("/health/live", () => Results.Ok(new { status = "Healthy" }))
+    .WithName("HealthLive");
+
+app.MapGet("/health/ready", async (HealthCheckService healthCheckService, HttpContext context) =>
+{
+    var report = await healthCheckService.CheckHealthAsync(_ => true, context.RequestAborted);
+    var payload = HealthCheckResponseFactory.CreatePayload(report);
+    context.Response.Headers["Cache-Control"] = "no-store";
+    return Results.Json(payload, statusCode: HealthCheckResponseFactory.GetStatusCode(report.Status));
+})
+    .WithName("HealthReady");
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

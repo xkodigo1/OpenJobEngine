@@ -8,6 +8,17 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 No changes yet.
 
+## [0.2.0-beta.1] - 2026-03-27
+
+### Added
+
+- EF Core migrations baseline and design-time `DbContext` factory.
+- `/health/live` and `/health/ready` endpoints with database, catalog and matching-rules checks.
+- Optional API key protection through `X-Api-Key`.
+- Rate limiting for collection runs, resume imports and webhook test calls.
+- Worker retries, backoff and in-memory source execution guards.
+- Integration tests for health, API key enforcement and rate limiting.
+
 ## [0.1.1-demo.2] - 2026-03-27
 
 ### Added

@@ -86,8 +86,8 @@ OpenJobEngine now uses centralized semantic versioning from `Directory.Build.pro
 
 Current baseline:
 
-- version: `0.1.1-demo.2`
-- stage: `demo`
+- version: `0.2.0-beta.1`
+- stage: `beta`
 - tag format: `v<version>`
 
 Release progression:

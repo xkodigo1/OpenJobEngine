@@ -15,9 +15,6 @@ public sealed class OpenJobEngineDatabaseInitializer(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<Persistence.OpenJobEngineDbContext>();
-        await dbContext.Database.EnsureCreatedAsync(cancellationToken);
-
         var jobSourceRepository = scope.ServiceProvider.GetRequiredService<IJobSourceRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var providers = scope.ServiceProvider.GetServices<IJobProvider>();
@@ -40,7 +37,7 @@ public sealed class OpenJobEngineDatabaseInitializer(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("OpenJobEngine database initialized");
+        logger.LogInformation("OpenJobEngine provider catalog initialized");
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
