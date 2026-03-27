@@ -6,7 +6,8 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 ## [Unreleased]
 
-No changes yet.
+- Added exportable release notes tooling for tag and GitHub Release bodies.
+- Added API compatibility guidance for the public `/api` surface.
 
 ## [0.3.0-beta.3] - 2026-03-27
 

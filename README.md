@@ -98,6 +98,8 @@ Release progression:
 
 Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
+Exportable release notes: `docs/release-notes.md`
+API compatibility policy: `docs/api-compatibility.md`
 Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
@@ -208,6 +210,7 @@ Flujo recomendado:
 6. revisar historico y metricas
 
 Las respuestas de error comunes ahora se exponen como `application/problem+json`.
+Release notes for tags and GitHub Releases should be exported from `CHANGELOG.md` with `scripts/export-release-notes.ps1` or `scripts/export-release-notes.sh`.
 
 ## Estado actual
 
