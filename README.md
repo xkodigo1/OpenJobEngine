@@ -101,6 +101,7 @@ Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
 Exportable release notes: `docs/release-notes.md`
 API compatibility policy: `docs/api-compatibility.md`
+Deployment and support: `docs/deployment-and-support.md`
 Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
@@ -232,6 +233,7 @@ Release notes for tags and GitHub Releases should be exported from `CHANGELOG.md
 - parsing de CV heuristico pero con warnings y confidencias
 - matching configurable por JSON y explicable
 - SQLite listo para onboarding open source
+- guia de despliegue y soporte en `docs/deployment-and-support.md`
 
 ## Documentacion adicional
 

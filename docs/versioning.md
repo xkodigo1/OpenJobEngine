@@ -194,3 +194,13 @@ Pragmatic rule for this repo:
 
 - if an API change affects current consumers, treat it as a release decision, not an implementation detail
 - use `docs/api-compatibility.md` as the short checklist before cutting a release
+
+## Stable consumer baseline
+
+`v1.0.0` is the first planned release where the repo should be treated as the stable consumer baseline for the public `/api` surface.
+
+That means:
+
+- keep deployment expectations documented in `docs/deployment-and-support.md`
+- treat the `v1.0.0` tag as the reference point for stable consumers
+- keep future breaking changes explicit and versioned
