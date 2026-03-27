@@ -7,4 +7,6 @@ public interface IMatchExecutionRepository
     Task AddAsync(MatchExecution execution, CancellationToken cancellationToken);
 
     Task<int> CountLastDaysAsync(int days, CancellationToken cancellationToken);
+
+    Task<MatchExecution?> GetLatestForProfileAsync(Guid profileId, CancellationToken cancellationToken);
 }

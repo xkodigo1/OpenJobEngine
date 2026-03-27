@@ -31,47 +31,26 @@ public sealed class DeterministicMatchingService(
         var jobs = await jobRepository.ListActiveAsync(cancellationToken);
         var filteredJobs = ApplyFilters(jobs, request);
         var rules = matchingRulesProvider.GetCurrent();
+        var previousExecution = await matchExecutionRepository.GetLatestForProfileAsync(request.ProfileId, cancellationToken);
         var matches = filteredJobs
             .Select(job => Score(profile, job, rules, skillIndex))
             .Where(result => !request.MinimumMatchScore.HasValue || result.MatchScore >= request.MinimumMatchScore.Value)
             .OrderByDescending(result => result.MatchScore)
             .ThenByDescending(result => result.Job.PublishedAtUtc ?? result.Job.CollectedAtUtc)
             .ToArray();
+        var result = CreateSearchResult(request.ProfileId, rules.Version, matches, request.Page, request.PageSize);
 
-        var page = request.Page <= 0 ? 1 : request.Page;
-        var pageSize = request.PageSize switch
-        {
-            <= 0 => 25,
-            > 100 => 100,
-            _ => request.PageSize
-        };
-
-        var pagedItems = matches.Skip((page - 1) * pageSize).Take(pageSize).ToArray();
-
-        decimal? averageScore = matches.Length == 0 ? null : matches.Average(x => x.MatchScore);
-        var highMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.High.ToString(), StringComparison.OrdinalIgnoreCase));
-        var mediumMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.Medium.ToString(), StringComparison.OrdinalIgnoreCase));
-        var lowMatchCount = matches.Count(x => string.Equals(x.MatchBand, MatchBand.Low.ToString(), StringComparison.OrdinalIgnoreCase));
-
-        await matchExecutionRepository.AddAsync(
-            new MatchExecution(
-                Guid.NewGuid(),
-                request.ProfileId,
-                request.Query,
-                pagedItems.Length,
-                pagedItems.FirstOrDefault()?.MatchScore,
-                averageScore,
-                highMatchCount,
-                mediumMatchCount,
-                lowMatchCount,
-                rules.Version),
-            cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return new MatchingSearchResultDto(
+        await PersistExecutionAsync(
             request.ProfileId,
-            rules.Version,
-            new PagedResult<JobMatchResultDto>(pagedItems, page, pageSize, matches.Length));
+            request.Query,
+            request.MinimumMatchScore,
+            matches,
+            result.Results.Items,
+            rules,
+            previousExecution,
+            cancellationToken);
+
+        return result;
     }
 
     public async Task<JobMatchResultDto?> GetJobMatchAsync(Guid profileId, Guid jobId, CancellationToken cancellationToken)
@@ -85,6 +64,44 @@ public sealed class DeterministicMatchingService(
         }
 
         return Score(profile, job, matchingRulesProvider.GetCurrent(), skillIndex);
+    }
+
+    public async Task<MatchingSearchResultDto> GetNewHighPriorityMatchesAsync(
+        Guid profileId,
+        decimal? minimumMatchScore,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var profile = await candidateProfileRepository.GetByIdAsync(profileId, cancellationToken)
+            ?? throw new ResourceNotFoundException($"Profile '{profileId}' was not found.");
+
+        var rules = matchingRulesProvider.GetCurrent();
+        var previousExecution = await matchExecutionRepository.GetLatestForProfileAsync(profileId, cancellationToken);
+        var threshold = minimumMatchScore ?? rules.Tolerances.NewHighPriorityThreshold;
+        var baselineUtc = previousExecution?.CreatedAtUtc;
+
+        var matches = (await jobRepository.ListActiveAsync(cancellationToken))
+            .Where(job => IsNewSinceBaseline(job, baselineUtc))
+            .Select(job => Score(profile, job, rules, skillIndex))
+            .Where(result => result.MatchScore >= threshold)
+            .OrderByDescending(result => result.MatchScore)
+            .ThenByDescending(result => result.Job.PublishedAtUtc ?? result.Job.CollectedAtUtc)
+            .ToArray();
+
+        var result = CreateSearchResult(profileId, rules.Version, matches, page, pageSize);
+
+        await PersistExecutionAsync(
+            profileId,
+            "__new_high_priority__",
+            threshold,
+            matches,
+            result.Results.Items,
+            rules,
+            previousExecution,
+            cancellationToken);
+
+        return result;
     }
 
     private static IReadOnlyCollection<JobOffer> ApplyFilters(IReadOnlyCollection<JobOffer> jobs, MatchingSearchRequest request)
@@ -124,30 +141,129 @@ public sealed class DeterministicMatchingService(
         return query.ToArray();
     }
 
+    private async Task PersistExecutionAsync(
+        Guid profileId,
+        string? query,
+        decimal? minimumRequestedScore,
+        IReadOnlyCollection<JobMatchResultDto> allMatches,
+        IReadOnlyCollection<JobMatchResultDto> pagedMatches,
+        MatchingRuleSetDto rules,
+        MatchExecution? previousExecution,
+        CancellationToken cancellationToken)
+    {
+        decimal? averageScore = allMatches.Count == 0 ? null : allMatches.Average(x => x.MatchScore);
+        var highMatchCount = allMatches.Count(x => string.Equals(x.MatchBand, MatchBand.High.ToString(), StringComparison.OrdinalIgnoreCase));
+        var mediumMatchCount = allMatches.Count(x => string.Equals(x.MatchBand, MatchBand.Medium.ToString(), StringComparison.OrdinalIgnoreCase));
+        var lowMatchCount = allMatches.Count(x => string.Equals(x.MatchBand, MatchBand.Low.ToString(), StringComparison.OrdinalIgnoreCase));
+        var strongMatchCount = allMatches.Count(x => x.StrongMatches.Count > 0);
+        var partialMatchCount = allMatches.Count(x => x.PartialMatches.Count > 0);
+        var hardFailureCount = allMatches.Count(x => x.HardFailures.Count > 0);
+        var newHighPriorityCount = allMatches.Count(x =>
+            x.MatchScore >= rules.Tolerances.NewHighPriorityThreshold &&
+            IsNewSinceBaseline(x.Job, previousExecution?.CreatedAtUtc));
+
+        await matchExecutionRepository.AddAsync(
+            new MatchExecution(
+                Guid.NewGuid(),
+                profileId,
+                query,
+                pagedMatches.Count,
+                allMatches.Count,
+                pagedMatches.FirstOrDefault()?.MatchScore,
+                averageScore,
+                highMatchCount,
+                mediumMatchCount,
+                lowMatchCount,
+                strongMatchCount,
+                partialMatchCount,
+                hardFailureCount,
+                newHighPriorityCount,
+                minimumRequestedScore,
+                rules.Version),
+            cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private static MatchingSearchResultDto CreateSearchResult(
+        Guid profileId,
+        string ruleVersion,
+        IReadOnlyCollection<JobMatchResultDto> matches,
+        int page,
+        int pageSize)
+    {
+        var normalizedPage = page <= 0 ? 1 : page;
+        var normalizedPageSize = pageSize switch
+        {
+            <= 0 => 25,
+            > 100 => 100,
+            _ => pageSize
+        };
+
+        var pagedItems = matches
+            .Skip((normalizedPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .ToArray();
+
+        return new MatchingSearchResultDto(
+            profileId,
+            ruleVersion,
+            new PagedResult<JobMatchResultDto>(pagedItems, normalizedPage, normalizedPageSize, matches.Count));
+    }
+
+    private static bool IsNewSinceBaseline(JobOfferDto job, DateTimeOffset? baselineUtc)
+    {
+        if (!baselineUtc.HasValue)
+        {
+            return true;
+        }
+
+        var referenceDate = job.PublishedAtUtc ?? job.CollectedAtUtc;
+        return referenceDate > baselineUtc.Value;
+    }
+
+    private static bool IsNewSinceBaseline(JobOffer job, DateTimeOffset? baselineUtc)
+    {
+        if (!baselineUtc.HasValue)
+        {
+            return true;
+        }
+
+        var referenceDate = job.PublishedAtUtc ?? job.LastSeenAtUtc;
+        return referenceDate > baselineUtc.Value;
+    }
+
     private static JobMatchResultDto Score(
         CandidateProfile profile,
         JobOffer job,
         MatchingRuleSetDto rules,
         IReadOnlyDictionary<string, CatalogSkillDefinition> skillIndex)
     {
-        var reasons = new List<string>();
+        var strongMatches = new List<string>();
+        var partialMatches = new List<string>();
+        var hardFailures = new List<string>();
         var missingRequirements = new List<string>();
         var candidateSkillSlugs = profile.Skills.Select(x => x.SkillSlug).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         decimal score = 0m;
-        score += ScoreSkills(profile, job, rules, skillIndex, candidateSkillSlugs, reasons, missingRequirements);
-        score += ScoreSeniority(profile, job, rules, reasons, missingRequirements);
-        score += ScoreLocation(profile, job, rules, reasons, missingRequirements, out var locationFit);
-        score += ScoreSalary(profile, job, rules, reasons, missingRequirements, out var salaryFit);
-        score += ScoreLanguages(profile, job, rules, reasons, missingRequirements, out var languageFit);
-        score -= CalculateQualityPenalty(job, rules, reasons);
+        score += ScoreSkills(profile, job, rules, skillIndex, candidateSkillSlugs, strongMatches, partialMatches, hardFailures, missingRequirements);
+        score += ScoreSeniority(profile, job, rules, strongMatches, partialMatches, missingRequirements);
+        score += ScoreLocation(profile, job, rules, strongMatches, partialMatches, hardFailures, missingRequirements, out var locationFit);
+        score += ScoreSalary(profile, job, rules, strongMatches, partialMatches, hardFailures, missingRequirements, out var salaryFit);
+        score += ScoreLanguages(profile, job, rules, strongMatches, partialMatches, hardFailures, missingRequirements, out var languageFit);
+        score += ScoreCompanyPreferences(profile, job, rules, strongMatches, hardFailures);
+        score -= CalculateQualityPenalty(job, rules, partialMatches);
+        score -= CalculateHardFailurePenalty(hardFailures.Count, rules);
 
         score = Math.Clamp(score, 0m, 100m);
         var matchBand = score >= 75m ? MatchBand.High : score >= 45m ? MatchBand.Medium : MatchBand.Low;
+        var matchReasons = strongMatches.Concat(partialMatches).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var missingItems = missingRequirements.Concat(hardFailures).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
-        if (reasons.Count == 0)
+        if (matchReasons.Length == 0)
         {
-            reasons.Add("El match se calculo con datos limitados.");
+            partialMatches.Add("El match se calculo con datos limitados.");
+            matchReasons = strongMatches.Concat(partialMatches).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
 
         return new JobMatchResultDto(
@@ -155,8 +271,11 @@ public sealed class DeterministicMatchingService(
             decimal.Round(score, 2),
             matchBand.ToString(),
             rules.Version,
-            reasons.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
-            missingRequirements.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            strongMatches.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            partialMatches.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            hardFailures.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            matchReasons,
+            missingItems,
             salaryFit,
             locationFit,
             languageFit);
@@ -168,12 +287,14 @@ public sealed class DeterministicMatchingService(
         MatchingRuleSetDto rules,
         IReadOnlyDictionary<string, CatalogSkillDefinition> skillIndex,
         HashSet<string> candidateSkillSlugs,
-        List<string> reasons,
+        List<string> strongMatches,
+        List<string> partialMatches,
+        List<string> hardFailures,
         List<string> missingRequirements)
     {
         if (job.SkillTags.Count == 0)
         {
-            reasons.Add("La vacante no tiene skills estructuradas; el score tecnico es parcial.");
+            partialMatches.Add("La vacante no tiene skills estructuradas; el score tecnico es parcial.");
             return 0m;
         }
 
@@ -222,15 +343,21 @@ public sealed class DeterministicMatchingService(
 
         if (exactMatches.Count > 0)
         {
-            reasons.Add($"Coincidencias tecnicas fuertes: {string.Join(", ", exactMatches.Distinct(StringComparer.OrdinalIgnoreCase).Take(4))}.");
+            strongMatches.Add($"Coincidencias tecnicas fuertes: {string.Join(", ", exactMatches.Distinct(StringComparer.OrdinalIgnoreCase).Take(4))}.");
         }
 
         if (relatedMatches.Count > 0)
         {
-            reasons.Add($"Coincidencias parciales por stack relacionado: {string.Join(", ", relatedMatches.Distinct(StringComparer.OrdinalIgnoreCase).Take(4))}.");
+            partialMatches.Add($"Coincidencias parciales por stack relacionado: {string.Join(", ", relatedMatches.Distinct(StringComparer.OrdinalIgnoreCase).Take(4))}.");
         }
 
-        var requiredScore = requiredSkills.Length == 0 ? rules.Weights.RequiredSkills * 0.65m : requiredAccumulator / requiredSkills.Length * rules.Weights.RequiredSkills;
+        var requiredCoverage = requiredSkills.Length == 0 ? 1m : requiredAccumulator / requiredSkills.Length;
+        if (requiredSkills.Length > 0 && requiredCoverage < rules.HardRequirements.MinimumRequiredSkillsCoverage)
+        {
+            hardFailures.Add("No cubres suficientes skills requeridas para esta vacante.");
+        }
+
+        var requiredScore = requiredSkills.Length == 0 ? rules.Weights.RequiredSkills * 0.65m : requiredCoverage * rules.Weights.RequiredSkills;
         var optionalScore = optionalSkills.Length == 0 ? rules.Weights.OptionalSkills * 0.4m : optionalAccumulator / optionalSkills.Length * rules.Weights.OptionalSkills;
 
         return requiredScore + optionalScore;
@@ -285,7 +412,8 @@ public sealed class DeterministicMatchingService(
         CandidateProfile profile,
         JobOffer job,
         MatchingRuleSetDto rules,
-        List<string> reasons,
+        List<string> strongMatches,
+        List<string> partialMatches,
         List<string> missingRequirements)
     {
         decimal score = 0m;
@@ -293,12 +421,12 @@ public sealed class DeterministicMatchingService(
         if (profile.SeniorityLevel == job.SeniorityLevel && job.SeniorityLevel != SeniorityLevel.Unknown)
         {
             score += rules.Weights.Seniority;
-            reasons.Add($"Tu seniority coincide con la vacante ({job.SeniorityLevel}).");
+            strongMatches.Add($"Tu seniority coincide con la vacante ({job.SeniorityLevel}).");
         }
         else if (profile.SeniorityLevel >= job.SeniorityLevel && job.SeniorityLevel != SeniorityLevel.Unknown)
         {
             score += rules.Weights.Seniority * 0.7m;
-            reasons.Add("Tu seniority cubre o supera el nivel esperado.");
+            partialMatches.Add("Tu seniority cubre o supera el nivel esperado.");
         }
         else if (job.SeniorityLevel != SeniorityLevel.Unknown)
         {
@@ -342,21 +470,34 @@ public sealed class DeterministicMatchingService(
         CandidateProfile profile,
         JobOffer job,
         MatchingRuleSetDto rules,
-        List<string> reasons,
+        List<string> strongMatches,
+        List<string> partialMatches,
+        List<string> hardFailures,
         List<string> missingRequirements,
         out string locationFit)
     {
+        var excludedWorkModes = profile.Preferences
+            .GetExcludedWorkModes()
+            .Select(x => x.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (excludedWorkModes.Contains(job.WorkMode.ToString()))
+        {
+            hardFailures.Add($"Tu perfil excluye vacantes con modalidad {job.WorkMode}.");
+        }
+
         if (job.WorkMode == WorkMode.Remote)
         {
             if (profile.Preferences.AcceptRemote)
             {
-                reasons.Add("La vacante es remota y tu perfil acepta trabajo remoto.");
+                strongMatches.Add("La vacante es remota y tu perfil acepta trabajo remoto.");
                 locationFit = "RemoteCompatible";
                 return rules.Weights.LocationWorkMode;
             }
 
             locationFit = "RemoteRejected";
             missingRequirements.Add("Tu perfil no prioriza trabajo remoto.");
+            hardFailures.Add("La vacante es remota, pero tu perfil no acepta este modo como preferencia.");
             return rules.Weights.LocationWorkMode * 0.15m;
         }
 
@@ -373,16 +514,16 @@ public sealed class DeterministicMatchingService(
 
         if (cityMatch || countryMatch)
         {
-            reasons.Add("La ubicacion de la vacante coincide con tu perfil.");
+            strongMatches.Add("La ubicacion de la vacante coincide con tu perfil.");
             locationFit = "Compatible";
-            return rules.Weights.LocationWorkMode;
+            return ApplyTimezonePreferenceBoost(profile, job, rules, rules.Weights.LocationWorkMode, strongMatches, partialMatches, hardFailures);
         }
 
         if (profile.LocationPreference.IsWillingToRelocate)
         {
-            reasons.Add("La vacante no coincide con tu ubicacion actual, pero tu perfil acepta reubicacion.");
+            partialMatches.Add("La vacante no coincide con tu ubicacion actual, pero tu perfil acepta reubicacion.");
             locationFit = "RelocationPossible";
-            return rules.Weights.LocationWorkMode * 0.75m;
+            return ApplyTimezonePreferenceBoost(profile, job, rules, rules.Weights.LocationWorkMode * 0.75m, strongMatches, partialMatches, hardFailures);
         }
 
         locationFit = "Mismatch";
@@ -394,7 +535,9 @@ public sealed class DeterministicMatchingService(
         CandidateProfile profile,
         JobOffer job,
         MatchingRuleSetDto rules,
-        List<string> reasons,
+        List<string> strongMatches,
+        List<string> partialMatches,
+        List<string> hardFailures,
         List<string> missingRequirements,
         out string salaryFit)
     {
@@ -407,7 +550,7 @@ public sealed class DeterministicMatchingService(
         if (!job.SalaryMin.HasValue && !job.SalaryMax.HasValue)
         {
             salaryFit = "Unknown";
-            reasons.Add("La vacante no publica salario; score salarial neutro.");
+            partialMatches.Add("La vacante no publica salario; score salarial neutro.");
             return rules.Weights.Salary * 0.5m;
         }
 
@@ -417,21 +560,30 @@ public sealed class DeterministicMatchingService(
         if (jobMax >= expectedMin)
         {
             salaryFit = "Good";
-            reasons.Add("La vacante esta dentro o cerca de tu expectativa salarial.");
+            strongMatches.Add("La vacante esta dentro o cerca de tu expectativa salarial.");
             return rules.Weights.Salary;
         }
 
         var ratio = jobMax <= 0 ? 0m : Math.Clamp(jobMax / expectedMin, 0m, 1m);
         salaryFit = "BelowExpectation";
         missingRequirements.Add("El salario publicado parece estar por debajo de tu expectativa.");
-        return rules.Weights.Salary * ratio * 0.5m;
+        if (ratio >= rules.Tolerances.SalaryCloseMatchRatio)
+        {
+            partialMatches.Add("El salario esta ligeramente por debajo de tu expectativa, pero dentro de la tolerancia configurada.");
+            return rules.Weights.Salary * ratio * 0.75m;
+        }
+
+        hardFailures.Add("La vacante queda materialmente por debajo de tu expectativa salarial.");
+        return rules.Weights.Salary * ratio * 0.35m;
     }
 
     private static decimal ScoreLanguages(
         CandidateProfile profile,
         JobOffer job,
         MatchingRuleSetDto rules,
-        List<string> reasons,
+        List<string> strongMatches,
+        List<string> partialMatches,
+        List<string> hardFailures,
         List<string> missingRequirements,
         out string languageFit)
     {
@@ -465,23 +617,29 @@ public sealed class DeterministicMatchingService(
 
         if (ratio >= 1m)
         {
-            reasons.Add("Cumples los requisitos de idioma detectados.");
+            strongMatches.Add("Cumples los requisitos de idioma detectados.");
             languageFit = "Strong";
             return rules.Weights.Languages;
         }
 
         if (ratio > 0m)
         {
-            reasons.Add("Cumples parcialmente los requisitos de idioma.");
+            partialMatches.Add("Cumples parcialmente los requisitos de idioma.");
             languageFit = "Partial";
+            if (ratio < rules.HardRequirements.MinimumLanguageCoverage)
+            {
+                hardFailures.Add("El nivel de idioma requerido no alcanza la cobertura minima configurada.");
+            }
+
             return rules.Weights.Languages * ratio;
         }
 
         languageFit = "Missing";
+        hardFailures.Add("No cumples los requisitos de idioma detectados.");
         return 0m;
     }
 
-    private static decimal CalculateQualityPenalty(JobOffer job, MatchingRuleSetDto rules, List<string> reasons)
+    private static decimal CalculateQualityPenalty(JobOffer job, MatchingRuleSetDto rules, List<string> partialMatches)
     {
         decimal penalty = 0m;
 
@@ -489,7 +647,7 @@ public sealed class DeterministicMatchingService(
         {
             var ratio = 1m - (job.QualityScore / Math.Max(0.01m, rules.Penalties.LowQualityThreshold));
             penalty += rules.Penalties.MaxQualityPenalty * Math.Clamp(ratio, 0m, 1m);
-            reasons.Add("La vacante fue penalizada por calidad baja de datos.");
+            partialMatches.Add("La vacante fue penalizada por calidad baja de datos.");
         }
 
         if (job.SkillTags.Count == 0)
@@ -498,5 +656,62 @@ public sealed class DeterministicMatchingService(
         }
 
         return penalty;
+    }
+
+    private static decimal ScoreCompanyPreferences(
+        CandidateProfile profile,
+        JobOffer job,
+        MatchingRuleSetDto rules,
+        List<string> strongMatches,
+        List<string> hardFailures)
+    {
+        var includedKeywords = profile.Preferences.GetIncludedCompanyKeywords();
+        var excludedKeywords = profile.Preferences.GetExcludedCompanyKeywords();
+        var companyText = $"{job.CompanyName} {job.Title} {job.Description}".Trim();
+
+        if (excludedKeywords.Any(keyword => companyText.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+        {
+            hardFailures.Add("La vacante coincide con keywords de empresa excluidas por tu perfil.");
+            return -rules.Penalties.CompanyKeywordExclusionPenalty;
+        }
+
+        if (includedKeywords.Any(keyword => companyText.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+        {
+            strongMatches.Add("La vacante coincide con preferencias de empresa/industria de tu perfil.");
+            return rules.Tolerances.CompanyKeywordInclusionBoost;
+        }
+
+        return 0m;
+    }
+
+    private static decimal ApplyTimezonePreferenceBoost(
+        CandidateProfile profile,
+        JobOffer job,
+        MatchingRuleSetDto rules,
+        decimal baseScore,
+        List<string> strongMatches,
+        List<string> partialMatches,
+        List<string> hardFailures)
+    {
+        var targetTimezones = profile.LocationPreference.GetTargetTimezones();
+        if (targetTimezones.Count == 0 || string.IsNullOrWhiteSpace(job.TimeZone))
+        {
+            return baseScore;
+        }
+
+        if (targetTimezones.Contains(job.TimeZone, StringComparer.OrdinalIgnoreCase))
+        {
+            strongMatches.Add("La vacante coincide con una zona horaria objetivo de tu perfil.");
+            return baseScore + rules.Tolerances.TimezoneMatchBoost;
+        }
+
+        partialMatches.Add("La vacante no coincide con tus zonas horarias objetivo.");
+        hardFailures.Add("La zona horaria de la vacante no coincide con tu preferencia operativa.");
+        return Math.Max(0m, baseScore - rules.Penalties.TimezoneMismatchPenalty);
+    }
+
+    private static decimal CalculateHardFailurePenalty(int hardFailureCount, MatchingRuleSetDto rules)
+    {
+        return hardFailureCount <= 0 ? 0m : hardFailureCount * rules.Penalties.HardFailurePenalty;
     }
 }

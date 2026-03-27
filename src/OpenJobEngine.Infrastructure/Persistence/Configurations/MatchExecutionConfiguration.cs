@@ -13,6 +13,8 @@ public sealed class MatchExecutionConfiguration : IEntityTypeConfiguration<Match
 
         builder.Property(x => x.Query).HasMaxLength(200);
         builder.Property(x => x.TopScore).HasPrecision(5, 2);
+        builder.Property(x => x.AverageScore).HasPrecision(5, 2);
+        builder.Property(x => x.MinimumRequestedScore).HasPrecision(5, 2);
         builder.Property(x => x.RuleVersion).HasMaxLength(50).IsRequired();
 
         builder.HasIndex(x => x.CandidateProfileId);

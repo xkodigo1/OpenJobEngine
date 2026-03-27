@@ -2,7 +2,7 @@
 
 This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
 
-It is based on the current system state after `v0.2.0-beta.1`.
+It is based on the current system state after `v0.2.1-beta.2`.
 
 ## Current system
 
@@ -18,7 +18,7 @@ OpenJobEngine already includes a functional backend-first baseline with these ca
 - Candidate skills, languages, salary and location preferences
 - Saved searches and profile alerts as persisted entities
 - Resume import from PDF with heuristic extraction, warnings and field confidences
-- Deterministic explainable matching with JSON-configured rules
+- Deterministic explainable matching with JSON-configured rules, hard requirements and preference-aware scoring
 - Metrics endpoints for overview and provider quality
 - Separate worker process for scheduled collection
 - Git Flow release process and centralized semantic versioning
@@ -29,7 +29,7 @@ The project is already useful for demos and internal validation, but it is not y
 
 - Alerts are persisted, but there is no real alert dispatch pipeline yet
 - Resume parsing is heuristic only
-- Matching is explainable, but still limited in business rules depth
+- Matching is explainable and richer than the demo baseline, but still limited in alerting and downstream automation
 - Providers are disabled by default and require manual configuration
 - Provider coverage is still small
 - No multi-tenant model
@@ -129,28 +129,26 @@ Delivered:
 - worker retries, backoff and in-memory guards against overlapping source runs
 - integration tests covering health, API key and rate limiting behavior
 
-### Next releases
-
 #### `v0.2.1-beta.2`
+
+Status:
+
+- released
 
 Goal:
 
 - improve matching usefulness for real users
 
-Scope:
+Delivered:
 
-- add hard requirements vs soft preferences in matching rules
-- incorporate preferred timezones into matching
-- incorporate excluded work modes into matching
-- incorporate include/exclude company keyword preferences
-- add "new high-priority matches" endpoint for candidate profiles
-- persist richer match execution statistics
+- hard requirements, tolerances and stronger penalties in JSON-configured matching rules
+- preferred timezone scoring and excluded work mode handling
+- include/exclude company keyword preference matching
+- `GET /api/profiles/{profileId}/matches/new-high-priority`
+- richer match execution statistics and high-priority counters
+- integration tests for high-priority matching flows and hard-failure explanations
 
-Release criteria:
-
-- different profiles produce visibly different rankings for the same jobs
-- strong mismatches are explained clearly
-- saved searches and alerts can use richer matching thresholds
+### Next releases
 
 #### `v0.3.0-beta.3`
 
@@ -235,10 +233,10 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.2.0-beta.1` should be:
+The next release target after `v0.2.1-beta.2` should be:
 
-- `v0.2.1-beta.2`
+- `v0.3.0-beta.3`
 
 Reason:
 
-- it is the next step that adds product value now that the operational baseline is in place.
+- matching quality is now stronger, so the next blocker for adoption is real alert delivery, better integrator ergonomics and broader provider coverage.
