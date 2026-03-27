@@ -15,5 +15,12 @@ public interface IMatchingService
         int pageSize,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<JobMatchResultDto>> GetAlertCandidatesAsync(
+        Guid profileId,
+        decimal? minimumMatchScore,
+        bool onlyNewJobs,
+        DateTimeOffset? baselineUtc,
+        CancellationToken cancellationToken);
+
     MatchingRuleSetDto GetCurrentRules();
 }

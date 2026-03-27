@@ -19,4 +19,6 @@ public sealed class CollectionWorkerOptions
     public double RetryBackoffMultiplier { get; init; } = 2.0;
 
     public bool SkipIfAlreadyRunning { get; init; } = true;
+
+    public bool DispatchAlertsAfterCollection { get; init; } = true;
 }

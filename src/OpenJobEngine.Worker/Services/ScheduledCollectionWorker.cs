@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenJobEngine.Application.Abstractions.Collections;
 using OpenJobEngine.Application.Abstractions.Providers;
+using OpenJobEngine.Application.Abstractions.Services;
 using OpenJobEngine.Worker.Options;
 
 namespace OpenJobEngine.Worker.Services;
@@ -29,6 +30,7 @@ public sealed class ScheduledCollectionWorker(
         if (workerOptions.RunOnStartup)
         {
             await RunScheduledCollectionAsync(workerOptions, stoppingToken);
+            await DispatchAlertsAsync(workerOptions, stoppingToken);
         }
 
         var interval = TimeSpan.FromMinutes(Math.Max(1, workerOptions.IntervalMinutes));
@@ -37,6 +39,7 @@ public sealed class ScheduledCollectionWorker(
         {
             await Task.Delay(interval, stoppingToken);
             await RunScheduledCollectionAsync(workerOptions, stoppingToken);
+            await DispatchAlertsAsync(workerOptions, stoppingToken);
         }
     }
 
@@ -167,6 +170,38 @@ public sealed class ScheduledCollectionWorker(
                     maxAttempts);
                 return;
             }
+        }
+    }
+
+    private async Task DispatchAlertsAsync(CollectionWorkerOptions workerOptions, CancellationToken cancellationToken)
+    {
+        if (!workerOptions.DispatchAlertsAfterCollection)
+        {
+            return;
+        }
+
+        try
+        {
+            using var scope = scopeFactory.CreateScope();
+            var alertDispatchService = scope.ServiceProvider.GetRequiredService<IAlertDispatchService>();
+            var result = await alertDispatchService.DispatchActiveAlertsAsync(cancellationToken);
+
+            logger.LogInformation(
+                "Alert dispatch completed. EvaluatedAlerts={EvaluatedAlerts} MatchedJobs={MatchedJobs} Delivered={DeliveredCount} Recorded={RecordedCount} Failed={FailedCount} Skipped={SkippedCount}",
+                result.EvaluatedAlerts,
+                result.MatchedJobs,
+                result.DeliveredCount,
+                result.RecordedCount,
+                result.FailedCount,
+                result.SkippedCount);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Alert dispatch stage failed after collection cycle");
         }
     }
 }

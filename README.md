@@ -86,14 +86,14 @@ OpenJobEngine now uses centralized semantic versioning from `Directory.Build.pro
 
 Current baseline:
 
-- version: `0.2.0-beta.1`
+- version: `0.3.0-beta.3`
 - stage: `beta`
 - tag format: `v<version>`
 
 Release progression:
 
-- demo: `0.1.1-demo.2`
-- beta: `0.2.0-beta.1`
+- demo: `0.1.0-demo.1`, `0.1.1-demo.2`
+- beta: `0.2.0-beta.1`, `0.2.1-beta.2`, `0.3.0-beta.3`
 - stable: `1.0.0`
 
 Detailed strategy: `docs/versioning.md`
@@ -151,6 +151,7 @@ Perfiles:
 - `PATCH /api/profiles/{profileId}/languages`
 - `POST /api/profiles/{profileId}/resume`
 - `GET /api/profiles/{profileId}/matches`
+- `GET /api/profiles/{profileId}/matches/new-high-priority`
 - `GET /api/profiles/{profileId}/saved-searches`
 - `POST /api/profiles/{profileId}/saved-searches`
 - `POST /api/profiles/{profileId}/alerts`
@@ -158,8 +159,12 @@ Perfiles:
 Matching y operacion:
 - `POST /api/matching/search`
 - `GET /api/matching/rules`
+- `POST /api/alerts/dispatch`
 - `GET /api/metrics/overview`
 - `GET /api/metrics/providers`
+- `GET /api/metrics/providers/operations`
+- `GET /api/metrics/matching`
+- `GET /api/metrics/alerts`
 - `POST /api/webhooks/test`
 
 Swagger:
@@ -187,6 +192,7 @@ La DB queda para datos dinamicos:
 - `Computrabajo`
 - `Adzuna`
 - `Greenhouse`
+- `Lever`
 
 ## Validacion manual recomendada
 
@@ -206,6 +212,7 @@ Las respuestas de error comunes ahora se exponen como `application/problem+json`
 ## Estado actual
 
 - `dotnet build OpenJobEngine.sln -c Release`: OK
+- `dotnet test OpenJobEngine.sln -c Release`: OK
 - sin autenticacion en el core
 - parsing de CV heuristico pero con warnings y confidencias
 - matching configurable por JSON y explicable

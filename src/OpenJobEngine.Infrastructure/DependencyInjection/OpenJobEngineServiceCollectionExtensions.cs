@@ -14,6 +14,7 @@ using OpenJobEngine.Infrastructure.Providers;
 using OpenJobEngine.Infrastructure.Providers.Adzuna;
 using OpenJobEngine.Infrastructure.Providers.Computrabajo;
 using OpenJobEngine.Infrastructure.Providers.Greenhouse;
+using OpenJobEngine.Infrastructure.Providers.Lever;
 using OpenJobEngine.Infrastructure.Resume;
 using OpenJobEngine.Infrastructure.Services;
 
@@ -32,6 +33,7 @@ public static class OpenJobEngineServiceCollectionExtensions
         services.Configure<ComputrabajoProviderOptions>(configuration.GetSection("Providers:Computrabajo"));
         services.Configure<AdzunaProviderOptions>(configuration.GetSection("Providers:Adzuna"));
         services.Configure<GreenhouseProviderOptions>(configuration.GetSection("Providers:Greenhouse"));
+        services.Configure<LeverProviderOptions>(configuration.GetSection("Providers:Lever"));
 
         services.AddDbContext<OpenJobEngineDbContext>(options =>
         {
@@ -62,6 +64,8 @@ public static class OpenJobEngineServiceCollectionExtensions
         services.AddScoped<IScrapeExecutionRepository, EfScrapeExecutionRepository>();
         services.AddScoped<IJobSourceRepository, EfJobSourceRepository>();
         services.AddScoped<ICandidateProfileRepository, EfCandidateProfileRepository>();
+        services.AddScoped<IProfileAlertRepository, EfProfileAlertRepository>();
+        services.AddScoped<IAlertDeliveryRepository, EfAlertDeliveryRepository>();
         services.AddScoped<IMatchExecutionRepository, EfMatchExecutionRepository>();
         services.AddScoped<INormalizationService, DefaultNormalizationService>();
         services.AddScoped<IJobEnrichmentService, DefaultJobEnrichmentService>();
@@ -70,6 +74,7 @@ public static class OpenJobEngineServiceCollectionExtensions
         services.AddScoped<IResumeTextExtractor, PdfPigResumeTextExtractor>();
         services.AddScoped<IResumeProfileExtractor, HeuristicResumeProfileExtractor>();
         services.AddScoped<IWebhookTestService, WebhookTestService>();
+        services.AddScoped<IAlertWebhookPublisher, AlertWebhookPublisher>();
         services.AddHttpClient();
         services.AddSingleton<ITechnologyTaxonomyProvider, JsonTechnologyTaxonomyProvider>();
         services.AddSingleton<IMatchingRulesProvider, JsonMatchingRulesProvider>();
@@ -89,6 +94,7 @@ public static class OpenJobEngineServiceCollectionExtensions
         var computrabajoOptions = configuration.GetSection("Providers:Computrabajo").Get<ComputrabajoProviderOptions>() ?? new();
         var adzunaOptions = configuration.GetSection("Providers:Adzuna").Get<AdzunaProviderOptions>() ?? new();
         var greenhouseOptions = configuration.GetSection("Providers:Greenhouse").Get<GreenhouseProviderOptions>() ?? new();
+        var leverOptions = configuration.GetSection("Providers:Lever").Get<LeverProviderOptions>() ?? new();
 
         if (computrabajoOptions.Enabled)
         {
@@ -119,6 +125,16 @@ public static class OpenJobEngineServiceCollectionExtensions
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
             services.AddTransient<IJobProvider>(sp => sp.GetRequiredService<GreenhouseJobProvider>());
+        }
+
+        if (leverOptions.Enabled)
+        {
+            services.AddSingleton(leverOptions);
+            services.AddHttpClient<LeverJobProvider>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+            services.AddTransient<IJobProvider>(sp => sp.GetRequiredService<LeverJobProvider>());
         }
     }
 }

@@ -1,7 +1,7 @@
 @baseUrl = http://localhost:5000
 @profileId = 00000000-0000-0000-0000-000000000000
 @jobId = 00000000-0000-0000-0000-000000000000
-@sourceName = greenhouse
+@sourceName = lever
 
 ### Expected response headers
 # X-OpenJobEngine-Version: current release version
@@ -90,6 +90,9 @@ Content-Type: application/json
 ### Get matches for profile
 GET {{baseUrl}}/api/profiles/{{profileId}}/matches?page=1&pageSize=10
 
+### Get only new high-priority matches
+GET {{baseUrl}}/api/profiles/{{profileId}}/matches/new-high-priority?minimumMatchScore=70&page=1&pageSize=10
+
 ### Get match detail for one job
 GET {{baseUrl}}/api/jobs/{{jobId}}/match?profileId={{profileId}}
 
@@ -101,3 +104,24 @@ GET {{baseUrl}}/api/metrics/providers
 
 ### System overview
 GET {{baseUrl}}/api/metrics/overview
+
+### Provider operations dashboard
+GET {{baseUrl}}/api/metrics/providers/operations
+
+### Matching dashboard
+GET {{baseUrl}}/api/metrics/matching
+
+### Alert dashboard
+GET {{baseUrl}}/api/metrics/alerts
+
+### Dispatch active alerts manually
+POST {{baseUrl}}/api/alerts/dispatch
+
+### Send a webhook test payload
+POST {{baseUrl}}/api/webhooks/test
+Content-Type: application/json
+
+{
+  "url": "https://example.com/webhooks/openjobengine",
+  "secret": "demo-secret"
+}

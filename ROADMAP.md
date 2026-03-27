@@ -2,13 +2,13 @@
 
 This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
 
-It is based on the current system state after `v0.2.1-beta.2`.
+It is based on the current system state after `v0.3.0-beta.3`.
 
 ## Current system
 
 OpenJobEngine already includes a functional backend-first baseline with these capabilities:
 
-- Multi-source job collection through `Computrabajo`, `Adzuna` and `Greenhouse`
+- Multi-source job collection through `Computrabajo`, `Adzuna`, `Greenhouse` and `Lever`
 - Canonical normalization of job offers
 - Enrichment of work mode, seniority, salary, location, skills and language signals
 - Deduplication through canonical keys
@@ -17,9 +17,10 @@ OpenJobEngine already includes a functional backend-first baseline with these ca
 - Candidate profile CRUD
 - Candidate skills, languages, salary and location preferences
 - Saved searches and profile alerts as persisted entities
+- Real alert dispatch pipeline with persisted alert deliveries and webhook publishing
 - Resume import from PDF with heuristic extraction, warnings and field confidences
 - Deterministic explainable matching with JSON-configured rules, hard requirements and preference-aware scoring
-- Metrics endpoints for overview and provider quality
+- Metrics endpoints for overview, provider quality, provider operations, matching and alerts
 - Separate worker process for scheduled collection
 - Git Flow release process and centralized semantic versioning
 
@@ -27,7 +28,7 @@ OpenJobEngine already includes a functional backend-first baseline with these ca
 
 The project is already useful for demos and internal validation, but it is not yet production-grade. Current gaps:
 
-- Alerts are persisted, but there is no real alert dispatch pipeline yet
+- Alert delivery is now functional, but compatibility guarantees and operational hardening still need to mature
 - Resume parsing is heuristic only
 - Matching is explainable and richer than the demo baseline, but still limited in alerting and downstream automation
 - Providers are disabled by default and require manual configuration
@@ -152,23 +153,21 @@ Delivered:
 
 #### `v0.3.0-beta.3`
 
+Status:
+
+- released
+
 Goal:
 
 - make the backend more marketable for integrators
 
-Scope:
+Delivered:
 
-- implement real alert dispatch pipeline
-- add webhook delivery for new relevant matches
-- add provider and matching operational dashboards through API
-- improve OpenAPI coverage and integration docs
-- add one more structured provider after platform stabilization
-
-Release criteria:
-
-- alerts are not just stored; they can be delivered
-- integrators can consume the API with less custom reverse engineering
-- provider coverage expands without lowering quality
+- real alert dispatch pipeline
+- webhook delivery for new relevant matches
+- provider and matching operational dashboards through API
+- improved API/docs coverage for integrators
+- `Lever` as the next structured provider
 
 #### `v0.4.0`
 
@@ -233,10 +232,10 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.2.1-beta.2` should be:
+The next release target after `v0.3.0-beta.3` should be:
 
-- `v0.3.0-beta.3`
+- `v0.4.0`
 
 Reason:
 
-- matching quality is now stronger, so the next blocker for adoption is real alert delivery, better integrator ergonomics and broader provider coverage.
+- alerting and integrator workflows are now in place, so the next blocker is improving onboarding quality, normalization trust and release governance.

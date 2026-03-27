@@ -6,6 +6,8 @@ public interface IJobSourceRepository
 {
     Task<JobSource?> GetByNameAsync(string name, CancellationToken cancellationToken);
 
+    Task<IReadOnlyCollection<JobSource>> ListAsync(CancellationToken cancellationToken);
+
     Task AddAsync(JobSource source, CancellationToken cancellationToken);
 
     Task UpdateAsync(JobSource source, CancellationToken cancellationToken);

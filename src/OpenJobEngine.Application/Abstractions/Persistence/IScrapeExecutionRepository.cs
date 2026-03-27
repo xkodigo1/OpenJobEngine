@@ -9,4 +9,6 @@ public interface IScrapeExecutionRepository
     Task UpdateAsync(ScrapeExecution execution, CancellationToken cancellationToken);
 
     Task<IReadOnlyCollection<ScrapeExecution>> GetRecentAsync(int take, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<ScrapeExecution>> GetLastDaysAsync(int days, CancellationToken cancellationToken);
 }
