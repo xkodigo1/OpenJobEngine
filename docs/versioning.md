@@ -4,8 +4,8 @@ OpenJobEngine uses Semantic Versioning with Git Flow.
 
 ## Current baseline
 
-- Current working version: `0.3.0-beta.3`
-- Current release stage: `beta`
+- Current working version: `0.4.0`
+- Current release stage: `stable`
 - Tag format: `v<version>`
 
 Examples:
@@ -102,11 +102,11 @@ Important:
 Release notes export:
 
 ```powershell
-.\scripts\export-release-notes.ps1 -Version 0.4.0-beta.1 -OutputPath artifacts\release-notes\v0.4.0-beta.1.md
+.\scripts\export-release-notes.ps1 -Version 0.4.0 -OutputPath artifacts\release-notes\v0.4.0.md
 ```
 
 ```bash
-./scripts/export-release-notes.sh --version 0.4.0-beta.1 --output artifacts/release-notes/v0.4.0-beta.1.md
+./scripts/export-release-notes.sh --version 0.4.0 --output artifacts/release-notes/v0.4.0.md
 ```
 
 ### Hotfix branches
@@ -136,18 +136,18 @@ Default properties:
 - `FileVersion`
 - `InformationalVersion`
 
-For the current beta line:
-
-```xml
-<VersionPrefix>0.3.0</VersionPrefix>
-<VersionSuffix>beta.3</VersionSuffix>
-```
-
-To move to the next beta iteration:
+For the current stable line:
 
 ```xml
 <VersionPrefix>0.4.0</VersionPrefix>
-<VersionSuffix>beta.1</VersionSuffix>
+<VersionSuffix></VersionSuffix>
+```
+
+To move to the next major stable release:
+
+```xml
+<VersionPrefix>1.0.0</VersionPrefix>
+<VersionSuffix></VersionSuffix>
 ```
 
 To publish the first stable:
