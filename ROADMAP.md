@@ -2,7 +2,7 @@
 
 This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
 
-It is based on the current system state after `v0.1.0-demo.1`.
+It is based on the current system state after `v0.1.1-demo.2`.
 
 ## Current system
 
@@ -97,39 +97,25 @@ Delivered:
 - SQLite-first local startup
 - Git Flow and release versioning baseline
 
-### Next releases
-
 #### `v0.1.1-demo.2`
+
+Status:
+
+- released
 
 Goal:
 
 - make the demo cleaner, more consistent and easier to run end to end
 
-Scope:
+Delivered:
 
-- add centralized API exception handling
-- return consistent `ProblemDetails` payloads for common failures
-- improve Swagger descriptions for the current public endpoints
-- tighten the manual demo flow and smoke documentation
-- expose version consistently in Swagger and API responses
-- tighten local provider configuration guidance for demos
+- centralized API exception handling with consistent `ProblemDetails`
+- Swagger/OpenAPI polish for the current public surface
+- version exposure in Swagger, headers and problem payloads
+- repository roadmap with staged releases
+- integration tests for API error contracts and release version exposure
 
-Explicitly out of scope:
-
-- EF migrations
-- API keys
-- rate limiting
-- worker retries and backoff
-- new providers
-- alert dispatch implementation
-
-Release criteria:
-
-- API starts cleanly with SQLite
-- demo flow can be executed without undocumented steps
-- failures return consistent error payloads
-- the public demo surface looks coherent in Swagger
-- the release remains small and does not introduce new platform subsystems
+### Next releases
 
 #### `v0.2.0-beta.1`
 
@@ -268,10 +254,10 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.1.0-demo.1` should be:
+The next release target after `v0.1.1-demo.2` should be:
 
-- `v0.1.1-demo.2`
+- `v0.2.0-beta.1`
 
 Reason:
 
-- it tightens the demo and operating surface without prematurely jumping into a large beta scope.
+- it establishes the first operational beta baseline now that the demo surface is already coherent.
