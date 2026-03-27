@@ -8,6 +8,25 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 No changes yet.
 
+## [0.2.1-beta.2] - 2026-03-27
+
+### Added
+
+- Preference-aware matching for target timezones, excluded work modes, and company keyword include/exclude signals.
+- `GET /api/profiles/{profileId}/matches/new-high-priority` for discovering newly relevant opportunities.
+- Richer match execution statistics including strong, partial and hard-failure counts plus new high-priority totals.
+- Integration tests covering high-priority matching flows and hard-failure explanations.
+
+### Changed
+
+- Matching rules now distinguish hard requirements, configurable tolerances and stronger business penalties.
+- Match results now expose `strongMatches`, `partialMatches` and `hardFailures` alongside the existing explainability fields.
+
+### Fixed
+
+- SQLite compatibility for repository ordering paths used by matching, history and recent execution queries.
+- EF Core detail loading for jobs now uses split queries to avoid multi-collection include warnings under integration tests.
+
 ## [0.2.0-beta.1] - 2026-03-27
 
 ### Added
