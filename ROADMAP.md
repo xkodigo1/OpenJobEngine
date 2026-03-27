@@ -2,7 +2,7 @@
 
 This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
 
-It is based on the current system state after `v0.1.1-demo.2`.
+It is based on the current system state after `v0.2.0-beta.1`.
 
 ## Current system
 
@@ -27,13 +27,7 @@ OpenJobEngine already includes a functional backend-first baseline with these ca
 
 The project is already useful for demos and internal validation, but it is not yet production-grade. Current gaps:
 
-- No authentication or API key protection
-- No health checks or readiness endpoints
-- No centralized `ProblemDetails` error handling
-- No rate limiting for expensive endpoints
-- Database schema still uses `EnsureCreated`, not EF migrations
 - Alerts are persisted, but there is no real alert dispatch pipeline yet
-- Worker scheduling is basic: fixed interval, no retries, no provider-level concurrency guards
 - Resume parsing is heuristic only
 - Matching is explainable, but still limited in business rules depth
 - Providers are disabled by default and require manual configuration
@@ -115,40 +109,27 @@ Delivered:
 - repository roadmap with staged releases
 - integration tests for API error contracts and release version exposure
 
-### Next releases
-
 #### `v0.2.0-beta.1`
+
+Status:
+
+- released
 
 Goal:
 
 - establish the first operational beta baseline without expanding product scope
 
-Scope:
+Delivered:
 
-- replace `EnsureCreated` with EF migrations
-- add optional API key authentication
-- add readiness and liveness checks
-- add basic rate limiting for collection, resume import and webhook test
-- prevent overlapping worker executions for the same source
-- improve worker reliability with retries and backoff
+- EF migrations baseline and design-time `DbContext` factory
+- optional startup migrations and compatibility guard for legacy local databases
+- liveness and readiness endpoints with DB/catalog/rules checks
+- optional API key protection through `X-Api-Key`
+- rate limiting for collection, resume import and webhook test endpoints
+- worker retries, backoff and in-memory guards against overlapping source runs
+- integration tests covering health, API key and rate limiting behavior
 
-Explicitly out of scope:
-
-- richer matching business rules
-- alert delivery pipeline
-- new providers
-- multi-tenant model
-- advanced analytics endpoints
-- major resume parsing redesign
-
-Release criteria:
-
-- schema is reproducible through migrations
-- protected mode can be enabled with API keys
-- liveness and readiness endpoints reflect real system state
-- rate limiting protects the most expensive endpoints
-- worker is safer under provider failures and overlapping schedules
-- beta branch is suitable for external validation of the backend contract
+### Next releases
 
 #### `v0.2.1-beta.2`
 
@@ -254,10 +235,10 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.1.1-demo.2` should be:
+The next release target after `v0.2.0-beta.1` should be:
 
-- `v0.2.0-beta.1`
+- `v0.2.1-beta.2`
 
 Reason:
 
-- it establishes the first operational beta baseline now that the demo surface is already coherent.
+- it is the next step that adds product value now that the operational baseline is in place.
