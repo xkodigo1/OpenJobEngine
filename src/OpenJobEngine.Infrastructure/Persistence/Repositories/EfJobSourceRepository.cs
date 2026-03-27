@@ -11,6 +11,14 @@ public sealed class EfJobSourceRepository(OpenJobEngineDbContext dbContext) : IJ
         return dbContext.JobSources.FirstOrDefaultAsync(x => x.Name == name, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<JobSource>> ListAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.JobSources
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(JobSource source, CancellationToken cancellationToken)
     {
         await dbContext.JobSources.AddAsync(source, cancellationToken);

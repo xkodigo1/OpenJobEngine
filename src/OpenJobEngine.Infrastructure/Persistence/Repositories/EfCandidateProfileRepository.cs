@@ -9,6 +9,7 @@ public sealed class EfCandidateProfileRepository(OpenJobEngineDbContext dbContex
     private IQueryable<CandidateProfile> QueryWithDetails()
     {
         return dbContext.CandidateProfiles
+            .AsSplitQuery()
             .Include(x => x.Skills)
             .Include(x => x.Languages)
             .Include(x => x.SavedSearches)
@@ -22,7 +23,8 @@ public sealed class EfCandidateProfileRepository(OpenJobEngineDbContext dbContex
 
     public Task UpdateAsync(CandidateProfile profile, CancellationToken cancellationToken)
     {
-        dbContext.CandidateProfiles.Update(profile);
+        // Profiles are loaded tracked from this repository, so SaveChanges picks up
+        // aggregate mutations without forcing child entities into Modified state.
         return Task.CompletedTask;
     }
 

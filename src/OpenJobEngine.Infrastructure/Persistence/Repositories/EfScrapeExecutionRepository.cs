@@ -28,4 +28,17 @@ public sealed class EfScrapeExecutionRepository(OpenJobEngineDbContext dbContext
             .Take(take <= 0 ? 20 : take)
             .ToArray();
     }
+
+    public async Task<IReadOnlyCollection<ScrapeExecution>> GetLastDaysAsync(int days, CancellationToken cancellationToken)
+    {
+        var threshold = DateTimeOffset.UtcNow.AddDays(-Math.Abs(days <= 0 ? 7 : days));
+        var items = await dbContext.ScrapeExecutions
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return items
+            .Where(x => x.StartedAtUtc >= threshold)
+            .OrderByDescending(x => x.StartedAtUtc)
+            .ToArray();
+    }
 }
