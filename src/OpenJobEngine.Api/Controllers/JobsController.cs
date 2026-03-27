@@ -73,7 +73,12 @@ public sealed class JobsController(IJobQueryService jobQueryService, IMatchingSe
     public async Task<ActionResult<JobOfferDto>> GetJobById(Guid id, CancellationToken cancellationToken)
     {
         var job = await jobQueryService.GetByIdAsync(id, cancellationToken);
-        return Ok(job ?? throw new ResourceNotFoundException($"Job offer '{id:D}' was not found."));
+        return job is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Job offer '{id:D}' was not found.")
+            : Ok(job);
     }
 
     /// <summary>
@@ -98,6 +103,11 @@ public sealed class JobsController(IJobQueryService jobQueryService, IMatchingSe
         CancellationToken cancellationToken)
     {
         var match = await matchingService.GetJobMatchAsync(profileId, id, cancellationToken);
-        return Ok(match ?? throw new ResourceNotFoundException($"Match result for profile '{profileId:D}' and job '{id:D}' was not found."));
+        return match is null
+            ? Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource not found",
+                detail: $"Match result for profile '{profileId:D}' and job '{id:D}' was not found.")
+            : Ok(match);
     }
 }

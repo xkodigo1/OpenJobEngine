@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OpenJobEngine.Api.Contracts;
 using OpenJobEngine.Application.Abstractions.Collections;
 using OpenJobEngine.Application.Common;
@@ -18,6 +19,8 @@ public sealed class WebhooksController(IWebhookTestService webhookTestService) :
     [HttpPost("test")]
     [ProducesResponseType(typeof(WebhookTestResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [EnableRateLimiting("webhook-test")]
     public async Task<ActionResult<WebhookTestResultDto>> TestWebhook(
         [FromBody] WebhookTestApiRequest request,
         CancellationToken cancellationToken)

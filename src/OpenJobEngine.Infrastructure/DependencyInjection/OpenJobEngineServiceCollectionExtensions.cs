@@ -76,6 +76,7 @@ public static class OpenJobEngineServiceCollectionExtensions
 
         services.AddSingleton<ComputrabajoHtmlParser>();
         services.AddSingleton<IPageContentFetcher, PlaywrightPageContentFetcher>();
+        services.AddHostedService<OpenJobEngineDatabaseMigrator>();
         services.AddHostedService<OpenJobEngineDatabaseInitializer>();
 
         RegisterProviders(services, configuration);
