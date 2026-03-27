@@ -167,4 +167,4 @@ dotnet build OpenJobEngine.sln -c Release
 
 5. Finish the release or hotfix branch.
 6. Push `develop`, `main` and tags.
-7. Publish GitHub release notes using the same version tag.
+7. Publish the release notes in the annotated tag or GitHub release body using the same version tag.
