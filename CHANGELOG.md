@@ -8,6 +8,26 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 No changes yet.
 
+## [0.3.0-beta.3] - 2026-03-27
+
+### Added
+
+- Real alert dispatch pipeline with manual dispatch endpoint, alert delivery persistence, webhook publishing and delivery metrics.
+- `Lever` as an additional structured provider, including paging support and provider tests.
+- Operational dashboards through `GET /api/metrics/alerts`, `GET /api/metrics/matching` and `GET /api/metrics/providers/operations`.
+- Integration tests covering alert dispatch, alert metrics and Lever provider behavior.
+
+### Changed
+
+- Worker scheduling can now dispatch alerts after collection cycles with retry-aware source execution.
+- API and documentation surface now describe alerts, operational dashboards and the expanded provider set.
+- EF migration baseline now includes `alert_deliveries` and matching/alert snapshots aligned with the current model.
+
+### Fixed
+
+- SQLite compatibility for alert, matching and scrape execution metrics that use `DateTimeOffset` windows.
+- Aggregate persistence for candidate alerts and alert deliveries under EF Core tracked graphs.
+
 ## [0.2.1-beta.2] - 2026-03-27
 
 ### Added
