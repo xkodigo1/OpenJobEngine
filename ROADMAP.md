@@ -1,8 +1,8 @@
 # OpenJobEngine Roadmap
 
-This document defines the product and engineering roadmap that should guide future releases of OpenJobEngine.
+This document defines the product and engineering roadmap that guided the initial release line of OpenJobEngine.
 
-It is based on the current system state after `v0.4.0`.
+It is based on the current system state after `v1.0.0`.
 
 ## Current system
 
@@ -35,7 +35,7 @@ The project is already useful for demos and internal validation, but it is not y
 - Providers are disabled by default and require manual configuration
 - Provider coverage is still small
 - No multi-tenant model
-- API compatibility discipline has started, but there is not yet a full contract-diff workflow
+- API compatibility discipline is now stable for the core surface, but there is not yet a full contract-diff workflow
 
 ## Product direction
 
@@ -202,9 +202,11 @@ Release criteria:
 - matching and enrichment are more trustworthy across common LATAM scenarios
 - release process is repeatable and auditable
 
-### Next release target
-
 #### `v1.0.0`
+
+Status:
+
+- released
 
 Goal:
 
@@ -217,6 +219,13 @@ Scope:
 - hardened worker operations
 - documented deployment guidance
 - release and support expectations for open source consumers
+
+Delivered:
+
+- stable core API contract snapshot with automated Swagger verification
+- deployment and support guidance for API, Worker, SQLite, PostgreSQL and migrations
+- hardened worker retries for failure summaries, per-source timeouts and alert-dispatch gating
+- worker unit tests and release governance coverage for the stable baseline
 
 Release criteria:
 
@@ -247,10 +256,11 @@ When deciding what to build next, apply these rules:
 
 ## Immediate next step
 
-The next release target after `v0.4.0` should be:
+The roadmap up to `v1.0.0` is complete.
 
-- `v1.0.0`
+Recommended follow-up work now belongs in the post-1.0 backlog:
 
-Reason:
-
-- the backend already covers aggregation, matching, alerting and release governance, so the next step is to stabilize contracts, deployment guidance and production expectations for the first stable major.
+- multi-tenant support
+- more structured providers
+- richer analytics and job-intelligence endpoints
+- stronger compatibility diff tooling
