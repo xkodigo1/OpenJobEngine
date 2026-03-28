@@ -41,12 +41,12 @@ public sealed class ReleaseGovernanceTests
         var changelog = File.ReadAllText(Path.Combine(RepoRoot, "CHANGELOG.md"));
         var match = Regex.Match(
             changelog,
-            @"(?ms)^## \[0\.4\.0\].*?(?=^## \[|\z)");
+            @"(?ms)^## \[1\.0\.0\].*?(?=^## \[|\z)");
 
         Assert.True(match.Success);
 
         var section = match.Value;
-        Assert.StartsWith("## [0.4.0]", section);
+        Assert.StartsWith("## [1.0.0]", section);
         Assert.Contains("### Added", section);
         Assert.Contains("### Fixed", section);
     }
