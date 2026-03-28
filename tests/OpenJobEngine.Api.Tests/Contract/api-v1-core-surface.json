@@ -1,0 +1,31 @@
+{
+  "requiredPaths": {
+    "/api/jobs": ["get"],
+    "/api/jobs/search": ["get"],
+    "/api/jobs/{id}": ["get"],
+    "/api/jobs/{id}/history": ["get"],
+    "/api/jobs/{id}/match": ["get"],
+    "/api/collections/run": ["post"],
+    "/api/collections/run/{source}": ["post"],
+    "/api/collections/executions": ["get"],
+    "/api/profiles": ["post"],
+    "/api/profiles/{profileId}": ["get", "put"],
+    "/api/profiles/{profileId}/preferences": ["patch"],
+    "/api/profiles/{profileId}/skills": ["patch"],
+    "/api/profiles/{profileId}/languages": ["patch"],
+    "/api/profiles/{profileId}/resume": ["post"],
+    "/api/profiles/{profileId}/matches": ["get"],
+    "/api/profiles/{profileId}/matches/new-high-priority": ["get"],
+    "/api/profiles/{profileId}/saved-searches": ["get", "post"],
+    "/api/profiles/{profileId}/alerts": ["post"],
+    "/api/matching/search": ["post"],
+    "/api/matching/rules": ["get"],
+    "/api/alerts/dispatch": ["post"],
+    "/api/metrics/overview": ["get"],
+    "/api/metrics/providers": ["get"],
+    "/api/metrics/providers/operations": ["get"],
+    "/api/metrics/matching": ["get"],
+    "/api/metrics/alerts": ["get"],
+    "/api/webhooks/test": ["post"]
+  }
+}

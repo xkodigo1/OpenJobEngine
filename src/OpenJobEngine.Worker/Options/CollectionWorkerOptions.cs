@@ -18,7 +18,11 @@ public sealed class CollectionWorkerOptions
 
     public double RetryBackoffMultiplier { get; init; } = 2.0;
 
+    public int ProviderTimeoutSeconds { get; init; } = 300;
+
     public bool SkipIfAlreadyRunning { get; init; } = true;
 
     public bool DispatchAlertsAfterCollection { get; init; } = true;
+
+    public bool OnlyDispatchAlertsWhenAnyCollectionSucceeded { get; init; } = true;
 }

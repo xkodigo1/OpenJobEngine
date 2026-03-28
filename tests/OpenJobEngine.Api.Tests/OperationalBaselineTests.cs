@@ -1,8 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenJobEngine.Infrastructure.Persistence;
 using Xunit;
 
 namespace OpenJobEngine.Api.Tests;
@@ -69,6 +72,16 @@ public sealed class OperationalBaselineTests(ApiWebApplicationFactory factory) :
 
         var payload = await third.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Too many requests", payload.GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public void StartupMigrations_LeaveNoPendingMigrations()
+    {
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OpenJobEngineDbContext>();
+        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToArray();
+
+        Assert.Empty(pendingMigrations);
     }
 
     private WebApplicationFactory<Program> CreateFactoryWithOverrides(Dictionary<string, string?> overrides)
