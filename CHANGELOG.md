@@ -6,6 +6,25 @@ The format is based on Keep a Changelog and the versioning strategy documented i
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-27
+
+### Added
+
+- A stable core API contract snapshot for the primary `/api` surface, backed by automated Swagger verification.
+- Deployment and support guidance for SQLite demos, PostgreSQL production, API/Worker separation and release expectations.
+- Worker unit tests covering retry-on-failure summaries, timeout handling and alert-dispatch gating.
+
+### Changed
+
+- The worker now treats failed provider summaries as retryable failures, applies per-source execution timeouts and emits structured cycle summaries.
+- Stable release guidance now treats EF Core migrations as the canonical schema evolution path for supported deployments.
+- Open source support guidance now defines the latest stable tag as the primary supported baseline.
+
+### Fixed
+
+- Scheduled collection no longer dispatches alerts after a cycle where every source failed.
+- Pending migrations are now explicitly checked in the integration baseline to catch schema drift before release.
+
 ## [0.4.0] - 2026-03-27
 
 ### Added

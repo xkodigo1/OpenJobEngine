@@ -87,7 +87,7 @@ OpenJobEngine now uses centralized semantic versioning from `Directory.Build.pro
 
 Current baseline:
 
-- version: `0.4.0`
+- version: `1.0.0`
 - stage: `stable`
 - tag format: `v<version>`
 
@@ -101,6 +101,7 @@ Detailed strategy: `docs/versioning.md`
 Release notes history: `CHANGELOG.md`
 Exportable release notes: `docs/release-notes.md`
 API compatibility policy: `docs/api-compatibility.md`
+Deployment and support: `docs/deployment-and-support.md`
 Product roadmap: `ROADMAP.md`
 
 Tambien puedes correr directamente:
@@ -228,10 +229,12 @@ Release notes for tags and GitHub Releases should be exported from `CHANGELOG.md
 
 - `dotnet build OpenJobEngine.sln -c Release`: OK
 - `dotnet test OpenJobEngine.sln -c Release`: OK
+- contrato API core estable verificado por snapshot
 - sin autenticacion en el core
 - parsing de CV heuristico pero con warnings y confidencias
 - matching configurable por JSON y explicable
 - SQLite listo para onboarding open source
+- guia de despliegue y soporte en `docs/deployment-and-support.md`
 
 ## Documentacion adicional
 

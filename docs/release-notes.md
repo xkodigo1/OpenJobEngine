@@ -9,13 +9,13 @@ Release notes for a tag or GitHub Release should be exported from the changelog 
 PowerShell:
 
 ```powershell
-.\scripts\export-release-notes.ps1 -Version 0.4.0 -OutputPath artifacts\release-notes\v0.4.0.md
+.\scripts\export-release-notes.ps1 -Version 1.0.0 -OutputPath artifacts\release-notes\v1.0.0.md
 ```
 
 Linux/macOS:
 
 ```bash
-./scripts/export-release-notes.sh --version 0.4.0 --output artifacts/release-notes/v0.4.0.md
+./scripts/export-release-notes.sh --version 1.0.0 --output artifacts/release-notes/v1.0.0.md
 ```
 
 ## Expected output
