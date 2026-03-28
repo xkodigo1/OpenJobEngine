@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{418B4694
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Api.Tests", "tests\OpenJobEngine.Api.Tests\OpenJobEngine.Api.Tests.csproj", "{5E3E0ADD-96D1-4335-AD20-E070334F1469}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJobEngine.Worker.Tests", "tests\OpenJobEngine.Worker.Tests\OpenJobEngine.Worker.Tests.csproj", "{7F81117A-E544-458F-901A-2825F9A050BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,11 +48,16 @@ Global
 		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E3E0ADD-96D1-4335-AD20-E070334F1469}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F81117A-E544-458F-901A-2825F9A050BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F81117A-E544-458F-901A-2825F9A050BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F81117A-E544-458F-901A-2825F9A050BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F81117A-E544-458F-901A-2825F9A050BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5E3E0ADD-96D1-4335-AD20-E070334F1469} = {418B4694-8953-40D1-9883-5D7ECAA40280}
+		{7F81117A-E544-458F-901A-2825F9A050BB} = {418B4694-8953-40D1-9883-5D7ECAA40280}
 	EndGlobalSection
 EndGlobal

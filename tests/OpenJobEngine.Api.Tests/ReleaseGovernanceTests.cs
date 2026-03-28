@@ -20,13 +20,19 @@ public sealed class ReleaseGovernanceTests
         var versioning = File.ReadAllText(Path.Combine(RepoRoot, "docs", "versioning.md"));
         var releaseNotes = File.ReadAllText(Path.Combine(RepoRoot, "docs", "release-notes.md"));
         var apiCompatibility = File.ReadAllText(Path.Combine(RepoRoot, "docs", "api-compatibility.md"));
+        var deployment = File.ReadAllText(Path.Combine(RepoRoot, "docs", "deployment-and-support.md"));
 
         Assert.Contains("docs/release-notes.md", readme);
         Assert.Contains("docs/api-compatibility.md", readme);
+        Assert.Contains("docs/deployment-and-support.md", readme);
         Assert.Contains("export release notes", versioning, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("export-release-notes.ps1", releaseNotes, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("export-release-notes.sh", releaseNotes, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Breaking changes", apiCompatibility);
+        Assert.Contains("SQLite", deployment, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("PostgreSQL", deployment, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Stable core API contract", deployment, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("support expectations", deployment, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

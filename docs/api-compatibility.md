@@ -38,6 +38,10 @@ Before tagging a release:
 4. verify any public API change is called out in the notes
 5. avoid silent contract changes
 
+## Stable contract reference
+
+See `docs/deployment-and-support.md` for the stable runtime contract that consumers should use as the baseline for deployment, support and API integration decisions.
+
 ## Practical scope after v0.4.0
 
 `v0.4.0` establishes the first explicit compatibility discipline, but it still avoids a heavy contract-diff toolchain.
